@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TensorScope v1.1.3｜Summary 一鍵帶入 & CHW/HWC & 視覺化張量動畫</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#111520; --text:#eaeef7; --sub:#9aa4b2;
+    --accent:#7aa2f7; --accent2:#8bd5ca; --warn:#f6c177; --bad:#ff6b6b;
+    --grid:#202636; --chip:#1a2130; --muted:#6b7380;
+    --shadow: 0 10px 30px rgba(0,0,0,.35);
+  }
+  [data-theme="light"]{
+    --bg:#f6f8fc; --panel:#ffffff; --text:#141a22; --sub:#5b6370;
+    --accent:#3b82f6; --accent2:#10b981; --warn:#d97706; --bad:#ef4444;
+    --grid:#e5e9f2; --chip:#f0f4f9; --shadow: 0 10px 30px rgba(0,0,0,.12);
+  }
+  *{box-sizing:border-box}
+  html, body { height: 100%; }
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font:14px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    letter-spacing:.2px;
+  }
+  header{ display:flex; align-items:center; justify-content:space-between;
+    padding:12px 16px; background:var(--panel); box-shadow:var(--shadow); position:sticky; top:0; z-index:5; }
+  header .brand{display:flex;align-items:center;gap:10px;font-weight:800}
+  header .brand .logo{width:20px;height:20px;border-radius:4px;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 0 0 2px rgba(255,255,255,.08) inset;}
+  header .actions{display:flex;align-items:center;gap:8px}
+  button, .btn{
+    background:var(--accent); color:white; border:none; padding:9px 12px; border-radius:10px; cursor:pointer; font-weight:700;
+    box-shadow: 0 6px 16px rgba(58,109,240,.25); transition: all .15s ease;
+  }
+  button.secondary{background:var(--chip); color:var(--text); box-shadow:none}
+  button.ghost{background:transparent; color:var(--text); border:1px solid var(--grid)}
+  button:hover{transform:translateY(-1px); opacity:.95}
+  button:disabled{opacity:.45; cursor:not-allowed}
+  select{border:1px solid var(--grid); background:var(--chip); color:var(--text); padding:8px 10px; border-radius:10px}
+  label.small{font-size:12px;color:var(--sub)}
+  .container{display:grid; grid-template-columns: 480px 1fr; gap:14px; padding:14px; height: calc(100vh - 64px - 28px); overflow: hidden;}
+  .panel{ background:var(--panel); border:1px solid var(--grid); border-radius:14px; box-shadow:var(--shadow); display:flex; flex-direction:column; overflow:hidden; min-height:0; }
+  .panel .title{padding:12px 14px; border-bottom:1px solid var(--grid); font-weight:800; display:flex; align-items:center; justify-content:space-between}
+  .panel .body{padding:12px; display:flex; flex-direction:column; gap:10px; flex:1; min-height:0; overflow:auto;}
+  textarea, input{ width:100%; border:1px solid var(--grid); background:transparent; color:var(--text); border-radius:10px; padding:10px 12px; outline:none; }
+  textarea{resize:vertical; min-height:160px; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Noto Sans Mono CJK TC", monospace}
+  .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+  .hint{color:var(--sub); font-size:12px}
+  .stage{ position:relative; flex:1; min-height:0; height:100%;
+    background: radial-gradient(ellipse at 20% 10%, rgba(122,162,247,.08), transparent 60%), radial-gradient(ellipse at 82% 18%, rgba(139,213,202,.08), transparent 60%), var(--panel);
+    border-radius:14px; border:1px solid var(--grid); overflow:hidden; }
+  #svgStage{width:100%; height:100%}
+  .timeline{display:flex; align-items:center; gap:8px; padding:10px 12px; border-top:1px solid var(--grid); background:linear-gradient(180deg, transparent, rgba(0,0,0,.03))}
+  .timeline .controls{display:flex; gap:8px; align-items:center}
+  .kbd{font:12px/1.2 ui-monospace; background:var(--chip); border:1px solid var(--grid); border-bottom-width:2px; padding:2px 6px; border-radius:6px}
+  .list{display:flex; gap:8px; overflow:auto; padding:10px 12px; border-top:1px solid var(--grid)}
+  .list .item{white-space:nowrap; padding:6px 10px; border-radius:10px; border:1px solid var(--grid); background:var(--chip); cursor:pointer}
+  .list .item.current{background:var(--accent2); color:#0b1016; font-weight:700}
+  .inspector{display:grid; grid-template-columns: 1fr 1fr; gap:8px}
+  .card{border:1px solid var(--grid); border-radius:12px; padding:10px; background:linear-gradient(180deg, rgba(255,255,255,.03), transparent)}
+  .card h4{margin:.2em 0 .5em; font-size:12px; letter-spacing:.8px; text-transform:uppercase; color:var(--muted)}
+  .shape{font-family:ui-monospace; font-size:13px}
+  .formula{font-family:ui-monospace; font-size:12px; color:var(--sub)}
+  .console{ display:grid; grid-template-rows: auto 1fr; height:300px; border-top:1px solid var(--grid); background:linear-gradient(180deg, rgba(255,255,255,.02), transparent); }
+  .console .bar{display:flex; gap:8px; align-items:center; padding:8px 12px}
+  .console pre{margin:0; padding:10px 12px; overflow:auto; font-size:12px; line-height:1.4; background:transparent; color:#dbe4ff}
+  .lvDBG{color:#9aa4b2}.lvINF{color:#a6da95}.lvWRN{color:#f6c177}.lvERR{color:#ff6b6b}
+  .chips{display:flex; flex-wrap:wrap; gap:6px}
+  .chips .chip{background:var(--chip); border:1px solid var(--grid); padding:6px 10px; border-radius:10px; cursor:pointer}
+  .chips .chip:hover{filter:brightness(1.05)}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="logo"></div>
+    <div>TensorScope｜張量形狀動畫檢視器</div>
+    <span class="btn" style="background:transparent;color:#9aa4b2;border:1px solid var(--grid)">Keras 解析 · 一鍵帶入 · CHW/HWC</span>
+  </div>
+  <div class="actions">
+    <button id="exportBtn" class="secondary">匯出 PNG</button>
+    <button id="fitBtn" class="secondary">重置視角</button>
+    <select id="fmtSel" class="secondary" title="影像資料格式">
+      <option value="channels_last">HWC（TensorFlow）</option>
+      <option value="channels_first">CHW（PyTorch）</option>
+    </select>
+    <select id="fxSel" class="secondary" title="視覺風格">
+      <option value="epic">EPIC（華麗）</option>
+      <option value="clean">CLEAN（簡潔）</option>
+    </select>
+    <label class="small"><input type="checkbox" id="rfToggle" checked/> 投影視角（Conv/Pool）</label>
+    <button id="themeBtn" class="ghost">切換主題</button>
+  </div>
+</header>
+
+<div class="container">
+  <section class="panel">
+    <div class="title">
+      <div>模型指令 & 匯入</div>
+      <div class="row">
+        <select id="presetSelect" title="載入預設範例">
+          <option value="vec_dense">🟢 向量 Dense（最簡）</option>
+          <option value="mlp">🟩 MLP（小）</option>
+          <option value="cnn_mini" selected>🟦 CNN（迷你）</option>
+          <option value="cnn_cifar">🟦 CNN（CIFAR 範例）</option>
+          <option value="resblock">🟪 ResBlock（簡化）</option>
+          <option value="unet_tiny">🟪 U‑Net Tiny（簡化）</option>
+          <option value="transformer_tiny">🟨 Transformer Encoder（簡化）</option>
+          <option value="rnn_text">🟧 文字 + BiLSTM</option>
+          <option value="channels_dense">🧪 通道映射（1×1 等價）</option>
+          <option value="ops_demo">🧩 張量操作大全</option>
+        </select>
+        <button id="loadPreset" class="secondary">載入範例</button>
+      </div>
+    </div>
+
+    <div class="body">
+      <div class="row">
+        <label class="small"><b>來源模式</b></label>
+        <select id="srcMode" class="secondary" title="選擇要用 Summary 還是 DSL">
+          <option value="auto" selected>自動（Summary 優先）</option>
+          <option value="summary">只用 Summary</option>
+          <option value="dsl">只用 DSL</option>
+          <option value="merge">合併（Summary → DSL）</option>
+        </select>
+        <button id="parseBtn">解析 ▶</button>
+        <button id="btnSummaryPlay" class="secondary">一鍵：用 Summary → 播放</button>
+        <button id="btnDSLPlay" class="secondary">一鍵：用 DSL → 播放</button>
+        <label class="small"><input type="checkbox" id="autoPlayAfterParse"/> 解析後自動播放</label>
+      </div>
+
+      <label class="small"><b>DSL 編輯器</b>（每行一層；支援 # 註解）</label>
+      <textarea id="dsl"></textarea>
+      <div class="hint">
+        例：<span class="kbd">input image[1,128,1,1] data_format=channels_first</span>
+        <span class="kbd">dense logits units=10</span>
+        <span class="kbd">permute axes=[0,3,1,2]</span>
+        <span class="kbd">squeeze / unsqueeze / expand_dims / reshape / concat / concatenate</span>
+        <span class="kbd">ones dims=[2,3,4] / zeros / randn</span>
+      </div>
+
+      <label class="small" style="margin-top:6px"><b>匯入 Summary</b>（Keras / torchsummary；支援箱線表格）</label>
+      <textarea id="summary"></textarea>
+      <div class="hint">貼上完整 summary；解析每一步會記錄在 Log。箱線框、分隔列會自動忽略且只列為 DEBUG。</div>
+
+      <div class="row">
+        <input id="jumpByName" placeholder="以名稱跳轉（如：conv2d_11 或 conv2）" />
+      </div>
+      <div class="row">
+        <div class="chips" id="opChips"></div>
+      </div>
+      <div class="small" style="padding:2px 2px 10px 2px;color:#9aa4b2">
+        Conv/Pool：out = ⌊(in + 2·pad − dilation·(k−1) − 1)/stride + 1⌋；pad=same ⇒ ceil(in/stride)。
+      </div>
+    </div>
+
+    <div class="console">
+      <div class="bar">
+        <b>Log 主控台</b>
+        <label class="small">等級
+          <select id="logLevel">
+            <option value="DEBUG">DEBUG</option>
+            <option value="INFO" selected>INFO</option>
+            <option value="WARN">WARN</option>
+            <option value="ERROR">ERROR</option>
+          </select>
+        </label>
+        <label class="small"><input type="checkbox" id="logAutoscroll" checked/> 自動捲動</label>
+        <button id="logClear" class="secondary">清除</button>
+        <button id="logCopy" class="secondary">複製</button>
+        <button id="logDownload" class="secondary">下載</button>
+      </div>
+      <pre id="logText"></pre>
+    </div>
+  </section>
+
+  <section class="panel" style="display:grid; grid-template-rows: minmax(260px, 1fr) auto auto;">
+    <div class="title">
+      <div>動畫舞台</div>
+      <div class="row">
+        <span class="btn" style="background:var(--chip);color:var(--text)">目前層：<span id="currentLabel">—</span></span>
+        <span class="btn" style="background:var(--chip);color:var(--text)">資料格式：<span id="fmtBadge">HWC</span></span>
+      </div>
+    </div>
+
+    <div class="stage" id="stageHost">
+      <svg id="svgStage" viewBox="0 0 1200 640" preserveAspectRatio="xMidYMid meet" aria-label="Tensor visualization stage">
+        <defs>
+          <linearGradient id="gFront" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#7aa2f7" stop-opacity="0.85"/>
+            <stop offset="1" stop-color="#3b82f6" stop-opacity="0.85"/>
+          </linearGradient>
+          <linearGradient id="gTop" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#8bd5ca" stop-opacity="0.9"/>
+            <stop offset="1" stop-color="#10b981" stop-opacity="0.85"/>
+          </linearGradient>
+          <linearGradient id="gSide" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#5e81ac" stop-opacity="0.9"/>
+            <stop offset="1" stop-color="#2e5aac" stop-opacity="0.9"/>
+          </linearGradient>
+          <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000" flood-opacity="0.35"/>
+          </filter>
+          <filter id="glow"><feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <g id="grid"></g>
+        <g id="stars"></g>
+
+        <g id="cam">
+          <g id="slices"></g>
+          <g id="cube" filter="url(#softShadow)">
+            <polygon id="faceTop" fill="url(#gTop)"></polygon>
+            <polygon id="faceSide" fill="url(#gSide)"></polygon>
+            <rect id="faceFront" fill="url(#gFront)" rx="6" ry="6"></rect>
+          </g>
+          <g id="fxKernel"></g>
+          <g id="fxPool"></g>
+          <g id="fxVector"></g>
+          <g id="fxDense"></g>
+          <g id="fxTokens"></g>
+          <g id="fxAttention"></g>
+          <g id="fxOps"></g>
+          <g id="labels"></g>
+        </g>
+      </svg>
+    </div>
+
+    <div class="timeline">
+      <div class="controls">
+        <button id="prevBtn" class="secondary">⟵</button>
+        <button id="playBtn">播放</button>
+        <button id="nextBtn" class="secondary">⟶</button>
+      </div>
+      <input type="range" id="progress" min="0" max="0" value="0" step="1" />
+      <div class="row">
+        <label class="small">速度
+          <input type="range" id="speed" min="0.3" max="2.0" step="0.1" value="1.0" />
+        </label>
+      </div>
+    </div>
+
+    <div class="body">
+      <div class="inspector">
+        <div class="card">
+          <h4>層資訊</h4>
+          <div id="infoOp">—</div>
+          <div class="shape">名稱：<b id="infoName">—</b></div>
+          <div class="shape">類型：<b id="infoKind">—</b></div>
+          <div class="shape">資料格式：<b id="infoFmt">HWC</b></div>
+        </div>
+        <div class="card">
+          <h4>形狀</h4>
+          <div class="shape">Input：<span id="shapeIn">—</span></div>
+          <div class="shape">Output：<span id="shapeOut">—</span></div>
+          <div class="shape">元素數：<span id="elemCount">—</span></div>
+        </div>
+        <div class="card">
+          <h4>參數/計算量（估）</h4>
+          <div class="shape">Params：<span id="paramCount">—</span></div>
+          <div class="shape">MACs：<span id="macs">—</span></div>
+        </div>
+        <div class="card">
+          <h4>公式 / 備註</h4>
+          <div class="formula" id="formula">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="list" id="stepList"></div>
+  </section>
+</div>
+
+<script>
+(function(){
+  /* ===== 全域錯誤攔截 → Log ===== */
+  window.onerror = function(msg, src, line, col){
+    try{
+      const area = document.querySelector('#logText');
+      const d = document.createElement('div');
+      d.className = 'lvERR';
+      d.textContent = `[JS-ERROR] ${msg} @ ${src}:${line}:${col}`;
+      area.appendChild(d);
+      alert('前端腳本錯誤：' + msg + '（詳見下方 Log）');
+    }catch(e){}
+  };
+  window.addEventListener('unhandledrejection', e=>{
+    const area = document.querySelector('#logText');
+    const d = document.createElement('div');
+    d.className = 'lvERR';
+    d.textContent = `[JS-PROMISE] ${e.reason && e.reason.message ? e.reason.message : e.reason}`;
+    area.appendChild(d);
+  });
+
+  /* ===== Logger ===== */
+  const Log = (()=> {
+    const area = () => document.querySelector('#logText');
+    const lvlSel = () => document.querySelector('#logLevel');
+    const auto = () => document.querySelector('#logAutoscroll').checked;
+    const LV = { DEBUG:0, INFO:1, WARN:2, ERROR:3 };
+    let buffer = [];
+    function line(level, msg, obj){
+      const now = new Date(); const t = now.toISOString().split('T')[1].replace('Z','');
+      const s = `[${t}] [${level}] ${msg}${obj!==undefined ? ' ' + safeJSON(obj) : ''}`;
+      buffer.push({level, s});
+      const minLv = LV[lvlSel().value] ?? LV.INFO;
+      if(LV[level] >= minLv){
+        const pre = area(); const span = document.createElement('div');
+        span.className = ({DEBUG:'lvDBG',INFO:'lvINF',WARN:'lvWRN',ERROR:'lvERR'}[level]); span.textContent = s; pre.appendChild(span);
+        if(auto()) pre.scrollTop = pre.scrollHeight;
+      }
+      try { (console[level.toLowerCase()] || console.log)(s); }catch(e){}
+    }
+    const safeJSON = (o)=>{ try{ return JSON.stringify(o); }catch(e){ return '[unserializable]'; } };
+    function clear(){ area().innerHTML=''; buffer=[]; }
+    function copy(){ const text = buffer.map(b=>b.s).join('\n'); navigator.clipboard.writeText(text); }
+    function download(){
+      const text = buffer.map(b=>b.s).join('\n');
+      const blob = new Blob([text], {type:'text/plain'}); const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href=url; a.download=`tensor_log_${Date.now()}.txt`; a.click(); URL.revokeObjectURL(url);
+    }
+    window.addEventListener('load', ()=>{
+      document.querySelector('#logClear').onclick = clear;
+      document.querySelector('#logCopy').onclick = copy;
+      document.querySelector('#logDownload').onclick = download;
+    });
+    return { debug:(m,o)=>line('DEBUG',m,o), info:(m,o)=>line('INFO',m,o), warn:(m,o)=>line('WARN',m,o), error:(m,o)=>line('ERROR',m,o), clear, copy, download };
+  })();
+
+  /* ===== 小工具 ===== */
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => Array.from(document.querySelectorAll(sel));
+  const clamp = (a,x,b)=>Math.max(a,Math.min(x,b));
+  const ceilDiv = (a,b)=>Math.floor((a + b - 1)/b);
+  const prod = arr => arr.reduce((a,b)=>a*b,1);
+  const deepClone = o => JSON.parse(JSON.stringify(o));
+  const fmtInt = n => n.toLocaleString('en-US');
+  const safeRemove = (el)=>{ try{ if(el && el.parentNode){ el.parentNode.removeChild(el); } }catch(e){} };
+
+  function parseList(v){
+    if(Array.isArray(v)) return v.slice();
+    if(typeof v==='number') return [v];
+    if(typeof v!=='string') return [];
+    let s = v.trim();
+    s = s.replace(/[［\[]/g,'[').replace(/[］\]]/g,']');
+    s = s.replace(/[（(]/g,'(').replace(/[）)]/g,')');
+    s = s.replace(/[，、；;|]/g, ',').replace(/[×✕xX✖︎]/g, ',');
+    s = s.replace(/[()\[\]\s]/g, '');
+    s = s.replace(/None|null/gi, '').replace(/\?/g,'');
+    if(!s) return [];
+    return s.split(',').map(x=>x.trim()).filter(Boolean).map(x => x==='-1' ? -1 : Number(x)).filter(x => x===-1 || Number.isFinite(x));
+  }
+  function shapeToStr(s){ if(!s || !s.dims) return '—'; return '('+s.dims.join(', ')+')'; }
+  const sanitizeDims = dims => (!Array.isArray(dims)||!dims.length) ? [1] : dims.map(v => (v===-1 || !Number.isFinite(v) || v<=0) ? 1 : Math.round(v));
+  const sanitizeShape = s => ({ dims: sanitizeDims(s?.dims||[1]), kind: s?.kind || guessKind(s?.dims||[1]) });
+  const elemCount = dims => prod(sanitizeDims(dims));
+
+  /* ===== CHW/HWC ===== */
+  let DATAFMT = 'channels_last';
+  function setDataFormat(fmt){
+    DATAFMT = fmt==='channels_first' ? 'channels_first' : 'channels_last';
+    $('#fmtSel').value = DATAFMT;
+    $('#fmtBadge').textContent = (DATAFMT==='channels_first' ? 'CHW' : 'HWC');
+    Log.info('DataFormat set', {DATAFMT});
+  }
+  function detectDataFormatFromDims(dims){
+    const d = sanitizeDims(dims||[]), nd = d.length;
+    if(nd<3) return DATAFMT;
+    const hasB = (nd>=4);
+    const a = hasB? d[1] : d[0], b = hasB? d[2] : d[1], c = hasB? d[3] : d[2];
+    const looksCHW = (a<=4 && b>=8 && c>=8);
+    const looksHWC = (c<=4 && b>=8 && a>=8);
+    if(looksCHW && !looksHWC) return 'channels_first';
+    if(looksHWC && !looksCHW) return 'channels_last';
+    return DATAFMT;
+  }
+  function toHWC(dims){
+    const sd = sanitizeDims(dims||[]), nd = sd.length;
+    if(nd>=4){ return (DATAFMT==='channels_first') ? {B:sd[0], C:sd[1], H:sd[2], W:sd[3]} : {B:sd[0], H:sd[1], W:sd[2], C:sd[3]}; }
+    if(nd===3){ return (DATAFMT==='channels_first') ? {B:1, C:sd[0], H:sd[1], W:sd[2]} : {B:1, H:sd[0], W:sd[1], C:sd[2]}; }
+    if(nd===2){ return {B:1, H:sd[0], W:sd[1], C:1}; }
+    if(nd===1){ return {B:1, H:1, W:sd[0], C:1}; }
+    return {B:1,H:1,W:1,C:1};
+  }
+  function fromHWCFor(inDims, hwc){
+    const sd = sanitizeDims(inDims||[]), nd = sd.length;
+    const B = (nd>=4)? sd[0] : (hwc.B||1);
+    if(nd>=4){ return (DATAFMT==='channels_first') ? [B, hwc.C, hwc.H, hwc.W] : [B, hwc.H, hwc.W, hwc.C]; }
+    if(nd===3){ return (DATAFMT==='channels_first') ? [hwc.C, hwc.H, hwc.W] : [hwc.H, hwc.W, hwc.C]; }
+    if(nd===2) return [hwc.H, hwc.W];
+    return [hwc.W];
+  }
+  const fmtLabel = () => (DATAFMT==='channels_first'?'CHW':'HWC');
+
+  /* ===== 舞台 ===== */
+  const stageHost = $('#stageHost'), svg = $('#svgStage');
+  const gGrid = $('#grid'), gStars = $('#stars'), gCam = $('#cam');
+  const gSlices = $('#slices'), faceFront = $('#faceFront'), faceSide = $('#faceSide'), faceTop = $('#faceTop');
+  const gLabels = $('#labels'), gK = $('#fxKernel'), gP = $('#fxPool'), gVec = $('#fxVector'), gDense = $('#fxDense'), gTok = $('#fxTokens'), gAtt = $('#fxAttention'), gOps = $('#fxOps');
+
+  const STAGE = { W: 1200, H: 640 };
+  const CENTER = { x: STAGE.W/2, y: STAGE.H/2 };
+  let stepsGlobal = [], currentScale={maxH:1,maxW:1,maxC:1};
+  let current=0, playing=false, speed=1.0, playTimer=null;
+  let FXMODE='epic', RFPROJ = true;
+
+  function drawGrid(){
+    const step=Math.max(20, Math.round(Math.min(STAGE.W, STAGE.H)/30));
+    let d=''; for(let x=0;x<=STAGE.W;x+=step){ d+=`M ${x} 0 V ${STAGE.H} `; }
+    for(let y=0;y<=STAGE.H;y+=step){ d+=`M 0 ${y} H ${STAGE.W} `; }
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', d); path.setAttribute('stroke', 'rgba(255,255,255,.05)'); path.setAttribute('stroke-width', '1'); path.setAttribute('fill', 'none');
+    gGrid.innerHTML=''; gGrid.appendChild(path);
+  }
+  function drawStars(){
+    gStars.innerHTML='';
+    const N = (FXMODE==='epic') ? 80 : 30;
+    for(let i=0;i<N;i++){
+      const c = node('circle', {cx: Math.random()*STAGE.W, cy: Math.random()*STAGE.H, r: Math.random()*1.6+0.2, fill:'rgba(255,255,255,.08)'});
+      gStars.appendChild(c);
+    }
+  }
+  function resizeStage(){
+    const r = stageHost.getBoundingClientRect();
+    STAGE.W = Math.max(560, Math.floor(r.width));
+    STAGE.H = Math.max(320, Math.floor(r.height));
+    svg.setAttribute('viewBox', `0 0 ${STAGE.W} ${STAGE.H}`);
+    CENTER.x = STAGE.W/2; CENTER.y = STAGE.H/2;
+    drawGrid(); drawStars();
+    if(stepsGlobal.length){
+      currentScale = scaleFromAll(stepsGlobal);
+      renderCube(stepsGlobal[current]?.outShape, null);
+    }
+  }
+  if('ResizeObserver' in window){ new ResizeObserver(()=>resizeStage()).observe(stageHost); }
+  window.addEventListener('load', ()=>{ resizeStage(); });
+
+  /* ===== DSL / Summary 解析 ===== */
+
+  const SHAPE_GROUP_RE = /[（(［\[]([0-9NnOoEe\?\s,\-×✕xX]+)[）)\]］]/g;
+
+  function isValidShapeInside(s) {
+    const tokens = String(s)
+      .split(/[,×✕xX]/)
+      .map(t => t.trim())
+      .filter(Boolean);
+    if (!tokens.length) return false;
+    return tokens.every(tok => /^-?\d+$/.test(tok) || /^none$/i.test(tok) || tok==='?');
+  }
+  function findOutputShape(line) {
+    let m, last = null;
+    SHAPE_GROUP_RE.lastIndex = 0;
+    while ((m = SHAPE_GROUP_RE.exec(line)) !== null) {
+      const inside = m[1];
+      if (isValidShapeInside(inside)) last = '(' + inside + ')';
+    }
+    return last;
+  }
+
+  const BOX_LINE_RE = /^[\s\+\-\|┌┐└┘├┤┬┴┼─│═║╬╠╣╦╩╔╗╚╝]+$/;
+  const looksBorderOnly = s => BOX_LINE_RE.test(s);
+  const looksTableRow = s => /[│║|]/.test(s);
+
+  function tokenize(line){
+    const parts = []; let buf='', depth=0;
+    for(const ch of line.trim()){
+      if(ch==='[' || ch==='(' || ch==='［' || ch==='（') { depth++; buf+=ch; }
+      else if(ch===']' || ch===')' || ch==='］' || ch==='）') { depth--; buf+=ch; }
+      else if(/\s/.test(ch) && depth===0){ if(buf) { parts.push(buf); buf=''; } }
+      else buf+=ch;
+    } if(buf) parts.push(buf); return parts;
+  }
+  function normalizeParams(p){
+    const out = {};
+    for(const k in p){
+      const v = p[k];
+      if(/^(filters|units|kernel|k|size|stride|s|dilation|d|axis|axes|add|depth|heads)$/.test(k)){
+        out[k] = Array.isArray(v)? v.map(Number) : Number(String(v).replace(/[^0-9\-]/g,'')) || Number(v);
+      }else if(/^(pad|padding|data_format|datafmt|format|use_bias|type|kind|reduce)$/.test(k)){
+        out[k] = String(v).toLowerCase();
+      }else if(/^(to)$/.test(k)){
+        out[k] = parseList(v);
+      }else if(/^(return_sequences|bidirectional)$/.test(k)){
+        out[k] = /^(1|true|yes|y)$/i.test(String(v));
+      }else out[k]=v;
+    } return out;
+  }
+
+  function parseDSL(text, seedShape=null){
+    Log.info('parseDSL: start');
+    const lines = text.split('\n').map((l,i)=>({raw:l, line:i+1, clean:l.replace(/#.*$/,'').trim()})).filter(x=>x.clean.length>0);
+    const steps=[]; let lastShape = seedShape ? sanitizeShape(seedShape) : null;
+    for(const L of lines){
+      const tokens = tokenize(L.clean); if(tokens.length===0) continue;
+      const opRaw = tokens.shift(); const op = opRaw.toLowerCase();
+      let name = ''; if(tokens.length && !tokens[0].includes('=') && !/[\[\(［（].*[\]\)］）]/.test(tokens[0])) name = tokens.shift();
+      const params={}; for(const t of tokens){ const m=t.match(/^([a-zA-Z_][\w\-]*)=(.+)$/); if(m) params[m[1].toLowerCase()] = m[2]; }
+      const P = normalizeParams(params);
+
+      const alias = { 'avgpool2d':'avgpool2d', 'averagepool2d':'avgpool2d', 'concatenate':'concat', 'expand_dims':'unsqueeze', 'transpose':'permute' };
+      const mappedOp = alias[op] || op;
+
+      if(mappedOp==='input'){
+        if(seedShape){
+          Log.debug('DSL merge: 忽略 input（已由 seedShape 提供）', {line:L.line});
+          continue;
+        }
+        let typeKey = Object.keys(P).find(k=>/image|tensor|text|dims|type|kind/.test(k)) || '';
+        let spec = P.dims || P[typeKey] || tokens.find(x=>/\[.*\]/.test(x)) || '';
+        const dims = parseList(spec);
+        let kind = 'tensor';
+        if(/image/i.test(typeKey)) kind='image2d'; else if(/text/i.test(typeKey)) kind='seq';
+        const outShape={dims, kind};
+        const pf=(P.data_format||P.datafmt||P.format||'').toLowerCase();
+        if(pf.includes('first')) setDataFormat('channels_first');
+        else if(pf.includes('last')) setDataFormat('channels_last');
+        else if(kind==='image2d' || dims.length>=3) setDataFormat(detectDataFormatFromDims(dims));
+        steps.push({index:steps.length, name:name||op, op:mappedOp, params:{...P, spec}, inShape:null, outShape, note:'模型輸入'});
+        lastShape=outShape; Log.debug('DSL: input', {line:L.line, outShape}); continue;
+      }
+
+      if(mappedOp==='create' || mappedOp==='ones' || mappedOp==='zeros' || mappedOp==='randn'){
+        let typeKey = Object.keys(P).find(k=>/image|tensor|text|dims|type|kind/.test(k)) || '';
+        let spec = P.dims || P[typeKey] || tokens.find(x=>/\[.*\]/.test(x)) || '';
+        const dims = parseList(spec);
+        let kind = (P.kind||P.type||'tensor').includes('image')? 'image2d' : (P.kind||P.type||'tensor');
+        const outShape={dims, kind};
+        if(kind==='image2d' || dims.length>=3){
+          const pf=(P.data_format||P.datafmt||P.format||'').toLowerCase();
+          if(pf.includes('first')) setDataFormat('channels_first');
+          else if(pf.includes('last')) setDataFormat('channels_last');
+          else setDataFormat(detectDataFormatFromDims(dims));
+        }
+        steps.push({index:steps.length, name:name||op, op:mappedOp, params:{...P, spec}, inShape:null, outShape, note:`建立張量`});
+        lastShape=outShape; Log.debug('DSL: create-like', {line:L.line, outShape}); continue;
+      }
+
+      if(!lastShape){ const msg=`第 ${L.line} 行：請先定義 input 或 create`; Log.error(msg); throw new Error(msg); }
+      const calc = calculators[mappedOp] || calculators['identity'];
+      const {outShape, note, formula, warn} = calc(lastShape, P);
+      const step={index:steps.length, name:name||`${mappedOp}${countSameOp(steps,mappedOp)+1}`, op:mappedOp, params:P, inShape:deepClone(lastShape), outShape, note, formula, warn};
+      Log.debug('DSL step', {line:L.line, op:mappedOp, name:step.name, in:step.inShape?.dims, out:step.outShape?.dims});
+      steps.push(step); lastShape=outShape;
+    }
+    Log.info('parseDSL: done', {steps:steps.length});
+    return steps;
+  }
+
+  function parseKerasSummary(text){
+    Log.info('parseKerasSummary: start');
+    const rawLines = text.split('\n').map((l,i)=>({i:i+1, t:l.replace(/\r/g,'').trim()}));
+    const rows = rawLines.filter(r => r.t.length &&
+      !/^[_=]+$/.test(r.t) &&
+      !/^(Model:|Total params:|Trainable params:|Non-trainable params:)/i.test(r.t) &&
+      !looksBorderOnly(r.t)
+    );
+    Log.debug('summary rows after filter', {rows:rows.length});
+
+    const steps=[]; let lastShape=null; let fmtLocked=false;
+
+    const mapTypeFromLine = (line) => {
+      const low = line.toLowerCase();
+      const m1 = line.match(/\(([A-Za-z][A-Za-z0-9_\.]+)\)/);
+      const t = (m1? m1[1] : null) || '';
+      const cand = (t||low);
+      return mapKerasType(cand) || 'unknown';
+    };
+
+    for(const r of rows){
+      const shapeToken = findOutputShape(r.t);
+      if(!shapeToken){
+        if(looksTableRow(r.t)) Log.debug('skip table row: no shape token', {line:r.i, text:r.t});
+        else Log.warn('skip line: no shape token', {line:r.i, text:r.t});
+        continue;
+      }
+
+      Log.debug('shape token found', {line:r.i, token: shapeToken});
+      const dims = parseList(shapeToken.replace(/[()（）\[\]［］]/g,''));
+      if(!dims.length){
+        Log.warn('skip line: shape parse empty', {line:r.i, text:r.t, token:shapeToken});
+        continue;
+      }
+      Log.debug('dims parsed', {line:r.i, dims});
+
+      const name = (r.t.split('(')[0] || '').trim();
+      const op = mapTypeFromLine(r.t);
+      const outShape = { dims, kind: guessKind(dims) };
+
+      if (steps.length === 0) {
+        steps.push({
+          index: 0, name: 'input', op: 'input',
+          params: { type: 'tensor', spec: `[${dims.join(',')}]` },
+          inShape: null, outShape, note: '來源：Summary（以第1層輸出近似輸入）'
+        });
+        lastShape = outShape;
+
+        if (!fmtLocked && dims.length >= 3) {
+          setDataFormat(detectDataFormatFromDims(dims));
+          fmtLocked = true;
+        }
+        Log.debug('summary: created input from first row', {line:r.i, out:outShape.dims, fmt: DATAFMT});
+      }
+
+      steps.push({
+        index: steps.length,
+        name: name || op,
+        op,
+        params: {},
+        inShape: deepClone(lastShape),
+        outShape,
+        note: `來源：summary（line ${r.i}）`
+      });
+
+      Log.debug('summary step', {line:r.i, name, op, in:lastShape?.dims, out:outShape?.dims});
+      lastShape = outShape;
+    }
+
+    if(!steps.length){
+      Log.error('parseKerasSummary: no steps parsed（可能格式不符或全被過濾）');
+    }else{
+      Log.info('parseKerasSummary: done', {steps:steps.length});
+    }
+    return steps;
+  }
+  function mapKerasType(s){
+    const t = String(s||'').toLowerCase();
+    if (/conv/.test(t)) return 'conv2d';
+    if (/global.*avg.*pool/.test(t)) return 'globalavgpool2d';
+    if (/(avg.?pool|averagepool)/.test(t)) return 'avgpool2d';
+    if (/(max.?pool)/.test(t)) return 'maxpool2d';
+    if (/flatten/.test(t)) return 'flatten';
+    if (/(dense|linear|fc)/.test(t)) return 'dense';
+    if (/dropout/.test(t)) return 'dropout';
+    if (/(activation|relu|gelu|softmax|sigmoid|tanh)/.test(t)) return 'activation';
+    if (/batch.*norm/.test(t)) return 'batchnorm';
+    if (/layer.*norm/.test(t)) return 'layernorm';
+    if (/embedding/.test(t)) return 'embedding';
+    if (/bilstm/.test(t)) return 'bilstm';
+    if (/lstm/.test(t)) return 'lstm';
+    if (/gru/.test(t)) return 'gru';
+    if (/rnn/.test(t)) return 'rnn';
+    if (/attention/.test(t)) return 'mhsa';
+    return 'unknown';
+  }
+
+  /* ===== 計算器 ===== */
+  const calculators = {
+    identity(inShape){ return { outShape: deepClone(inShape), note:'形狀不變' }; },
+    relu: passThrough('ReLU 啟動函數，形狀不變'),
+    gelu: passThrough('GELU 啟動函數，形狀不變'),
+    softmax: passThrough('Softmax，形狀不變'),
+    activation: passThrough('Activation（形狀不變）'),
+    dropout: passThrough('Dropout（形狀不變）'),
+    batchnorm: passThrough('BatchNorm，形狀不變'),
+    layernorm: passThrough('LayerNorm，形狀不變'),
+
+    flatten(inShape){ return { outShape: { dims:[elemCount(inShape.dims)], kind:'vec' }, note:'Flatten 展平' }; },
+
+    reshape(inShape, p){
+      const to = (p.to && p.to.length) ? p.to : []; if(!to.length) return { outShape: deepClone(inShape), note:'缺少 to=[...]', warn:true };
+      const inProd = elemCount(inShape.dims);
+      let outDims = to.slice(); const negIdx = outDims.indexOf(-1);
+      if(negIdx>=0){ const known = prod(outDims.filter(x=>x!==-1)); if(inProd%known!==0) return { outShape:deepClone(inShape), note:'reshape 乘積不相符', warn:true }; outDims[negIdx]=Math.max(1, Math.floor(inProd/known)); }
+      else if(inProd!==prod(outDims)) return { outShape:deepClone(inShape), note:'reshape 乘積不相符', warn:true };
+      return { outShape:{dims:outDims, kind:guessKind(outDims, inShape.kind)}, note:`Reshape 至 ${shapeToStr({dims:outDims})}` };
+    },
+
+    permute(inShape, p){
+      const axes = Array.isArray(p.axes)? p.axes : parseList(p.axes);
+      const dims = sanitizeDims(inShape.dims), nd = dims.length;
+      if(!axes || axes.length!==nd) return { outShape:deepClone(inShape), note:`缺少 axes（期望 ${nd} 維）`, warn:true };
+      const out = axes.map(i=> dims[i]);
+      return { outShape:{dims:out, kind:guessKind(out,inShape.kind)}, note:`Permute 軸重排`, formula:`axes=[${axes.join(',')}]` };
+    },
+
+    squeeze(inShape, p){
+      const dims = sanitizeDims(inShape.dims);
+      const axes = (p.axis && (Array.isArray(p.axis)? p.axis : parseList(p.axis))) || null;
+      let out = [];
+      if(axes && axes.length){ out = dims.filter((v,i)=> !(axes.includes(i) && v===1)); }
+      else{ out = dims.filter((v,i)=> v!==1 || i===0); }
+      if(out.length===0) out=[1];
+      return { outShape:{dims:out, kind:guessKind(out,inShape.kind)}, note:'Squeeze 移除尺寸為 1 的維度' };
+    },
+
+    unsqueeze(inShape, p){
+      const dims = sanitizeDims(inShape.dims).slice();
+      let axes = (Array.isArray(p.axis)? p.axis : parseList(p.axis)); if(!axes || !axes.length) axes=[1];
+      axes.sort((a,b)=>a-b);
+      for(const ax of axes){ if(ax<=dims.length) dims.splice(ax,0,1); }
+      return { outShape:{dims, kind:guessKind(dims,inShape.kind)}, note:`Unsqueeze 插入維度 1：axes=[${axes.join(',')}]` };
+    },
+
+    concat(inShape, p){
+      const dims = sanitizeDims(inShape.dims).slice();
+      const axis = Number(p.axis ?? 0);
+      const add = Number(p.add ?? 0);
+      if(!Number.isFinite(add) || add<=0) return { outShape:deepClone(inShape), note:'concat 缺少 add=...', warn:true };
+      if(axis<0 || axis>=dims.length) return { outShape:deepClone(inShape), note:'axis 超界', warn:true };
+      dims[axis] = (dims[axis]||0) + add;
+      return { outShape:{dims, kind:guessKind(dims,inShape.kind)}, note:`Concat 沿 axis=${axis} 疊合 +${add}` };
+    },
+    concatenate(inShape,p){ return calculators.concat(inShape,p); },
+    expand_dims(inShape,p){ return calculators.unsqueeze(inShape,p); },
+
+    dense(inShape, p){
+      const units = p.units || p.filters || 0; if(!units) return { outShape: deepClone(inShape), note:'缺少 units', warn:true };
+      const inDims = sanitizeDims(inShape.dims);
+      const hwc = toHWC(inDims);
+      const hasSpatial = (inDims.length>=3);
+      const isChannelMap = hasSpatial && (hwc.H===1 && hwc.W===1);
+      if(isChannelMap){
+        const outDims = fromHWCFor(inDims, {B:hwc.B, H:1, W:1, C:units});
+        return { outShape:{dims:outDims, kind:'image2d'}, note:'Channel Map（等效 1×1 Conv）', formula:`C'=${units}` };
+      }
+      if(inDims.length===2){ return { outShape:{dims:[inDims[0], units], kind:'seq_feats'}, note:'Time-Distributed Dense（逐 token）' }; }
+      return { outShape:{dims:[units], kind:'vec'}, note:'Dense 全連接層（輸出 units）' };
+    },
+
+    embedding(inShape, p){
+      const dims = sanitizeDims(inShape.dims);
+      const L = dims.length===1? dims[0] : dims[dims.length-1];
+      const dim = p.dim || 128; return { outShape:{dims:[L, dim], kind:'seq_feats'}, note:`Embedding: vocab=${p.vocab||'?'}, dim=${dim}` };
+    },
+
+    rnn: rnnCalc('RNN'), gru: rnnCalc('GRU'), lstm: rnnCalc('LSTM'),
+    bilstm: (inShape, p)=> rnnCalc('LSTM')(inShape, {...p, bidirectional:true}),
+
+    conv2d(inShape, p){
+      const {B,H,W,C} = toHWC(inShape.dims);
+      const k = p.kernel || p.k || 3, s = p.stride || p.s || 1, d = p.dilation || p.d || 1;
+      const pad = (p.pad||p.padding||'valid').toLowerCase(); const filters = p.filters || p.units || C;
+      let outH, outW, formula='';
+      if(pad==='same'){ outH=Math.max(1, ceilDiv(H, s)); outW=Math.max(1, ceilDiv(W, s));
+        formula = `same: H' = ceil(${H}/${s})=${outH}, W' = ceil(${W}/${s})=${outW}, C'=${filters}`;
+      }else{ outH=Math.max(1, Math.floor((H - d*(k-1) - 1)/s + 1)); outW=Math.max(1, Math.floor((W - d*(k-1) - 1)/s + 1));
+        formula = `valid: H' = floor((${H} - ${d}*(${k}-1) - 1)/${s} + 1) = ${outH}; W'=${outW}; C'=${filters}`; }
+      const outDims = fromHWCFor(inShape.dims, {B, H:outH, W:outW, C:filters});
+      return { outShape:{dims:outDims, kind:'image2d'}, note:`Conv2D k=${k}, s=${s}, d=${d}, pad=${pad}, filters=${filters}`, formula };
+    },
+
+    maxpool2d(inShape, p){
+      const {B,H,W,C} = toHWC(inShape.dims);
+      const k = p.size || p.kernel || p.k || 2, s = p.stride || p.s || k;
+      const pad = (p.pad||p.padding||'valid').toLowerCase();
+      let outH, outW, formula='';
+      if(pad==='same'){ outH=Math.max(1, ceilDiv(H, s)); outW=Math.max(1, ceilDiv(W, s));
+        formula=`same: H' = ceil(${H}/${s})=${outH}, W' = ceil(${W}/${s})=${outW}`;
+      }else{ outH=Math.max(1, Math.floor((H - k)/s + 1)); outW=Math.max(1, Math.floor((W - k)/s + 1));
+        formula=`valid: H' = floor((${H}-${k})/${s} + 1) = ${outH}; W'=${outW}`; }
+      const outDims = fromHWCFor(inShape.dims, {B, H:outH, W:outW, C});
+      return { outShape:{dims:outDims, kind:'image2d'}, note:`MaxPool2D k=${k}, s=${s}, pad=${pad}`, formula };
+    },
+
+    avgpool2d(inShape, p){
+      const {B,H,W,C} = toHWC(inShape.dims);
+      const k = p.size || p.kernel || p.k || 2, s = p.stride || p.s || k;
+      const pad = (p.pad||p.padding||'valid').toLowerCase();
+      let outH, outW, formula='';
+      if(pad==='same'){ outH=Math.max(1, ceilDiv(H, s)); outW=Math.max(1, ceilDiv(W, s));
+        formula=`same: H' = ceil(${H}/${s})=${outH}, W' = ceil(${W}/${s})=${outW}`;
+      }else{ outH=Math.max(1, Math.floor((H - k)/s + 1)); outW=Math.max(1, Math.floor((W - k)/s + 1));
+        formula=`valid: H' = floor((${H}-${k})/${s} + 1) = ${outH}; W'=${outW}`; }
+      const outDims = fromHWCFor(inShape.dims, {B, H:outH, W:outW, C});
+      return { outShape:{dims:outDims, kind:'image2d'}, note:`AvgPool2D k=${k}, s=${s}, pad=${pad}`, formula };
+    },
+
+    globalavgpool2d(inShape){
+      const {B,C} = toHWC(inShape.dims);
+      const outDims = fromHWCFor(inShape.dims, {B, H:1, W:1, C});
+      return { outShape:{dims:outDims, kind:'image2d'}, note:'GlobalAveragePooling2D：空間歸約到通道' };
+    },
+
+    mhsa(inShape, p){ const out=deepClone(inShape); return { outShape: out, note:`Multi-Head Self-Attention（heads=${p.heads||8}）`, formula:'輸出形狀 = 輸入形狀 (L, D)' }; },
+
+    ones(inShape,p){ return calculators.create(inShape,{...p, type:(p.type||'tensor')}); },
+    zeros(inShape,p){ return calculators.create(inShape,{...p, type:(p.type||'tensor')}); },
+    randn(inShape,p){ return calculators.create(inShape,{...p, type:(p.type||'tensor')}); },
+
+    create(inShape,p){
+      const spec = p.dims || p.spec || [];
+      const dims = parseList(spec);
+      const kind = (p.kind||p.type||'tensor').includes('image')? 'image2d' : (p.kind||p.type||'tensor');
+      return { outShape:{dims, kind}, note:`建立 ${p.type||'tensor'}：${shapeToStr({dims})}` };
+    },
+
+    unknown(inShape,p){ const out = p.to&&p.to.length? {dims:p.to, kind:guessKind(p.to,inShape.kind)} : deepClone(inShape); return { outShape: out, note:'未知層；保留形狀' }; }
+  };
+  function passThrough(note){ return (inShape)=>({ outShape: deepClone(inShape), note }); }
+  function rnnCalc(type){
+    return (inShape, p)=>{
+      const dims = sanitizeDims(inShape.dims.slice(-2));
+      if(dims.length<2) return { outShape: deepClone(inShape), note:`${type} 輸入需為 (L, D)`, warn:true };
+      const L=dims[0], units=p.units||128, dir=p.bidirectional?2:1, rs=p.return_sequences===true;
+      if(rs) return { outShape:{dims:[L, units*dir], kind:'seq_feats'}, note:`${p.bidirectional?'Bi-':''}${type}（回傳序列）` };
+      return { outShape:{dims:[units*dir], kind:'vec'}, note:`${p.bidirectional?'Bi-':''}${type}（回傳最後狀態）` };
+    };
+  }
+  function guessKind(dims, prev){
+    if(dims.length>=3) return 'image2d';
+    if(dims.length===2) return 'seq_feats';
+    if(dims.length===1) return 'vec';
+    return prev||'tensor';
+  }
+  function countSameOp(steps, op){ return steps.filter(s=>s.op===op).length; }
+
+  /* ===== 幾何渲染 / 動畫 ===== */
+  function node(tag, attrs={}){ const n=document.createElementNS('http://www.w3.org/2000/svg', tag); for(const k in attrs) n.setAttribute(k, attrs[k]); return n; }
+  function pts(arr){ return arr.map(p=>p.join(',')).join(' '); }
+
+  let fxRAFid=null, fxToken=0;
+  const Anim = {
+    tick(draw){
+      fxToken++; const my = fxToken;
+      cancelAnimationFrame(fxRAFid);
+      function loop(now){ if(my!==fxToken) return; draw(now); fxRAFid=requestAnimationFrame(loop); }
+      fxRAFid=requestAnimationFrame(loop);
+    },
+    stop(){ fxToken++; if(fxRAFid){ cancelAnimationFrame(fxRAFid); fxRAFid=null; } },
+
+    /* --- Conv --- */
+    kernelScan(g, step, proj=true){
+      const cols = Math.min(12, Math.max(4, Math.round(g.W / 24)));
+      const rows = Math.min(12, Math.max(4, Math.round(g.H / 24)));
+      const cellW = g.w/cols, cellH = g.h/rows;
+      const k = step.params.kernel || step.params.k || 3;
+      const s = step.params.stride || step.params.s || 1;
+      gK.innerHTML='';
+      const grid = node('g', {'stroke':'rgba(255,255,255,.06)','stroke-width':1,'fill':'none'});
+      for(let i=0;i<=cols;i++){ grid.appendChild(node('line',{x1:g.x+i*cellW,y1:g.y,x2:g.x+i*cellW,y2:g.y+g.h})); }
+      for(let j=0;j<=rows;j++){ grid.appendChild(node('line',{x1:g.x,y1:g.y+j*cellH,x2:g.x+g.w,y2:g.y+j*cellH})); }
+      gK.appendChild(grid);
+      const hi = node('rect',{x:g.x,y:g.y,width:k*cellW,height:k*cellH, fill:'rgba(250,250,250,.08)', stroke:'rgba(255,255,255,.35)', 'stroke-width':2, rx:6, ry:6});
+      gK.appendChild(hi);
+      const liftX = g.dx*0.85, liftY = g.dy*0.85;
+      const polyTop = node('polygon',{fill:'rgba(122,162,247,.18)', stroke:'rgba(255,255,255,.35)','stroke-width':1});
+      const wires = [0,1,2,3].map(()=> node('line', {stroke:'rgba(255,255,255,.35)', 'stroke-width':1}));
+      const outCell = node('rect',{x:0,y:0,width:12,height:12,rx:3,ry:3,fill:'#7aa2f7',opacity: proj? .95 : 0});
+      gK.appendChild(polyTop); wires.forEach(w=>gK.appendChild(w)); gK.appendChild(outCell);
+
+      const winCols = Math.max(1, Math.round((cols - (k-1)) / Math.max(1,s)));
+      const winRows = Math.max(1, Math.round((rows - (k-1)) / Math.max(1,s)));
+
+      Anim.tick((t)=>{
+        const period = 1600 / speed; const total = winCols*winRows;
+        const prog = (t%period)/period * total; const idx=Math.floor(prog);
+        const ix = idx % winCols, iy = Math.floor(idx / winCols);
+        const px = g.x + (ix*s)*cellW, py=g.y + (iy*s)*cellH, rw=k*cellW, rh=k*cellH;
+        hi.setAttribute('x',px); hi.setAttribute('y',py); hi.setAttribute('width',rw); hi.setAttribute('height',rh);
+        const base=[[px,py],[px+rw,py],[px+rw,py+rh],[px,py+rh]];
+        const top  = base.map(([x,y])=>[x+liftX, y+liftY]);
+        polyTop.setAttribute('points', pts(top));
+        for(let i=0;i<4;i++){
+          wires[i].setAttribute('x1', base[i][0]); wires[i].setAttribute('y1', base[i][1]);
+          wires[i].setAttribute('x2', top[i][0]);  wires[i].setAttribute('y2', top[i][1]);
+        }
+        const cx = (base[0][0]+base[2][0])/2 + liftX, cy = (base[0][1]+base[2][1])/2 + liftY;
+        outCell.setAttribute('x', cx-6); outCell.setAttribute('y', cy-6);
+      });
+    },
+
+    /* --- MaxPool：四個聚一個 --- */
+    poolAggregate(g, step, proj=true){
+      const cols = Math.min(12, Math.max(4, Math.round(g.W / 24)));
+      const rows = Math.min(12, Math.max(4, Math.round(g.H / 24)));
+      const cellW = g.w/cols, cellH = g.h/rows;
+      const k = step.params.size || step.params.kernel || step.params.k || 2;
+      const s = step.params.stride || step.params.s || k;
+
+      gP.innerHTML='';
+      const grid = node('g', {'stroke':'rgba(255,255,255,.06)','stroke-width':1,'fill':'none'});
+      for(let i=0;i<=cols;i++){ grid.appendChild(node('line',{x1:g.x+i*cellW,y1:g.y,x2:g.x+i*cellW,y2:g.y+g.h})); }
+      for(let j=0;j<=rows;j++){ grid.appendChild(node('line',{x1:g.x,y1:g.y+j*cellH,x2:g.x+g.w,y2:g.y+j*cellH})); }
+      gP.appendChild(grid);
+
+      const hi = node('rect',{x:g.x,y:g.y,width:k*cellW,height:k*cellH, fill:'rgba(255,255,255,.07)', stroke:'rgba(255,255,255,.35)','stroke-width':2, rx:6, ry:6});
+      gP.appendChild(hi);
+
+      const liftX = g.dx*0.85, liftY = g.dy*0.85;
+      const polyTop = node('polygon',{fill:'rgba(139,213,202,.25)', stroke:'rgba(255,255,255,.35)','stroke-width':1});
+      const wires = [0,1,2,3].map(()=> node('line', {stroke:'rgba(255,255,255,.35)', 'stroke-width':1}));
+      gP.appendChild(polyTop); wires.forEach(w=>gP.appendChild(w));
+
+      const group = node('g',{}); gP.appendChild(group);
+      const sample = Math.min(k*k, 16);
+      const sq = [];
+      for(let i=0;i<sample;i++){
+        const r=node('rect',{x:g.x,y:g.y,width:Math.max(6,cellW*0.45),height:Math.max(6,cellH*0.45),rx:4,ry:4,fill:'#7aa2f7',opacity:.95});
+        group.appendChild(r); sq.push(r);
+      }
+
+      let last=-1, centerDown={x:0,y:0}, centerUp={x:0,y:0};
+      const winCols = Math.max(1, Math.round((cols - (k-1)) / Math.max(1,s)));
+      const winRows = Math.max(1, Math.round((rows - (k-1)) / Math.max(1,s)));
+      const ease = t=> t<.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3)/2;
+
+      Anim.tick((t)=>{
+        const period = 1600 / speed; const total = winCols*winRows;
+        const prog = (t%period)/period * total; const idx=Math.floor(prog); const local=prog-idx;
+        const ix = idx % winCols, iy = Math.floor(idx / winCols);
+        const px = g.x + (ix*s)*cellW, py=g.y + (iy*s)*cellH, rw=k*cellW, rh=k*cellH;
+
+        if(idx!==last){
+          last=idx;
+          hi.setAttribute('x',px); hi.setAttribute('y',py); hi.setAttribute('width',rw); hi.setAttribute('height',rh);
+          const base=[[px,py],[px+rw,py],[px+rw,py+rh],[px,py+rh]];
+          const top  = base.map(([x,y])=>[x+liftX, y+liftY]);
+          polyTop.setAttribute('points', pts(top));
+          for(let i=0;i<4;i++){
+            wires[i].setAttribute('x1', base[i][0]); wires[i].setAttribute('y1', base[i][1]);
+            wires[i].setAttribute('x2', top[i][0]);  wires[i].setAttribute('y2', top[i][1]);
+          }
+          centerDown = {x:px+rw/2, y:py+rh/2};
+          centerUp = {x:centerDown.x+liftX, y:centerDown.y+liftY};
+        }
+
+        const e=ease(local);
+        const gx = Math.max(1, Math.floor(Math.sqrt(sample))), gy = Math.max(1, Math.ceil(sample/gx));
+        for(let i=0;i<sample;i++){
+          const ixg = i % gx, iyg = Math.floor(i/gx);
+          const sx = px + (ixg+0.5)*(rw/gx), sy = py + (iyg+0.5)*(rh/gy);
+          const tx = centerUp.x, ty = centerUp.y;
+          const x = sx + (tx - sx)*e, y = sy + (ty - sy)*e;
+          const scale = (i===0) ? (1+0.35*e) : Math.max(0.2,1-0.8*e);
+          const w = Math.max(6,cellW*0.45)*scale, h = Math.max(6,cellH*0.45)*scale;
+          sq[i].setAttribute('x', x - w/2); sq[i].setAttribute('y', y - h/2);
+          sq[i].setAttribute('width', w); sq[i].setAttribute('height', h);
+          sq[i].setAttribute('fill', i===0 ? '#8bd5ca' : '#7aa2f7');
+          sq[i].setAttribute('opacity', i===0 ? (0.6+0.35*e) : (0.9 * (1 - e)));
+        }
+      });
+    },
+
+    /* AvgPool（點雲平均） */
+    poolAverage(g, step, proj=true){
+      const cols = Math.min(12, Math.max(4, Math.round(g.W / 24)));
+      const rows = Math.min(12, Math.max(4, Math.round(g.H / 24)));
+      const cellW = g.w/cols, cellH = g.h/rows;
+      const k = step.params.size || step.params.kernel || step.params.k || 2;
+      const s = step.params.stride || step.params.s || k;
+      gP.innerHTML='';
+      const grid = node('g', {'stroke':'rgba(255,255,255,.06)','stroke-width':1,'fill':'none'});
+      for(let i=0;i<=cols;i++){ grid.appendChild(node('line',{x1:g.x+i*cellW,y1:g.y,x2:g.x+i*cellW,y2:g.y+g.h})); }
+      for(let j=0;j<=rows;j++){ grid.appendChild(node('line',{x1:g.x,y1:g.y+j*cellH,x2:g.x+g.w,y2:g.y+j*cellH})); }
+      gP.appendChild(grid);
+
+      const hi = node('rect',{x:g.x,y:g.y,width:k*cellW,height:k*cellH, fill:'rgba(255,255,255,.07)', stroke:'rgba(255,255,255,.35)','stroke-width':2, rx:6, ry:6});
+      gP.appendChild(hi);
+
+      const liftX = g.dx*0.85, liftY = g.dy*0.85;
+      const polyTop = node('polygon',{fill:'rgba(139,213,202,.25)', stroke:'rgba(255,255,255,.35)','stroke-width':1});
+      const wires = [0,1,2,3].map(()=> node('line', {stroke:'rgba(255,255,255,.35)', 'stroke-width':1}));
+      gP.appendChild(polyTop); wires.forEach(w=>gP.appendChild(w));
+
+      const sample = Math.min(k*k, 20);
+      const dots = []; const group=node('g',{}); gP.appendChild(group);
+      for(let i=0;i<sample;i++){ const d=node('circle',{cx:g.x,cy:g.y,r:3,fill:'#7aa2f7',opacity:.9}); group.appendChild(d); dots.push(d); }
+
+      let last=-1, centerUp={x:0,y:0};
+      const winCols = Math.max(1, Math.round((cols - (k-1)) / Math.max(1,s)));
+      const winRows = Math.max(1, Math.round((rows - (k-1)) / Math.max(1,s)));
+
+      Anim.tick((t)=>{
+        const period = 1500 / speed; const total = winCols*winRows;
+        const prog = (t%period)/period * total; const idx=Math.floor(prog); const local=prog-idx;
+        const ix = idx % winCols, iy = Math.floor(idx / winCols);
+        const px = g.x + (ix*s)*cellW, py=g.y + (iy*s)*cellH, rw=k*cellW, rh=k*cellH;
+
+        if(idx!==last){
+          last=idx;
+          hi.setAttribute('x',px); hi.setAttribute('y',py); hi.setAttribute('width',rw); hi.setAttribute('height',rh);
+          const base=[[px,py],[px+rw,py],[px+rw,py+rh],[px,py+rh]];
+          const top  = base.map(([x,y])=>[x+liftX, y+liftY]);
+          polyTop.setAttribute('points', pts(top));
+          for(let i=0;i<4;i++){
+            wires[i].setAttribute('x1', base[i][0]); wires[i].setAttribute('y1', base[i][1]);
+            wires[i].setAttribute('x2', top[i][0]);  wires[i].setAttribute('y2', top[i][1]);
+          }
+          centerUp = {x:px+rw/2+liftX, y:py+rh/2+liftY};
+        }
+        const e = Math.min(1, local*1.4);
+        const gx = Math.max(1, Math.floor(Math.sqrt(sample))), gy = Math.max(1, Math.ceil(sample/gx));
+        for(let i=0;i<sample;i++){
+          const ixg = i % gx, iyg = Math.floor(i/gx);
+          const sx = px + (ixg+0.5)*(rw/gx), sy = py + (iyg+0.5)*(rh/gy);
+          const tx = centerUp.x, ty = centerUp.y;
+          dots[i].setAttribute('cx', sx + (tx-sx)*e);
+          dots[i].setAttribute('cy', sy + (ty-sy)*e);
+          dots[i].setAttribute('opacity', .9*(1-e) + .1*e);
+        }
+      });
+    },
+
+    flattenBar(g){
+      const bar = node('rect',{x:g.x, y:g.y+g.h+10, width:g.w, height:10, fill:'#7aa2f7', rx:5, ry:5, opacity:.9});
+      gVec.appendChild(bar);
+      Anim.tick((t)=>{ const k = 0.5 + 0.5*Math.sin((t/700)); bar.setAttribute('opacity', 0.6 + 0.4*k); });
+    },
+
+    featureProject(g, step){
+      const inDims = sanitizeDims(step.inShape?.dims||[1]);
+      const srcN = Math.min(16, (inDims.length===2? inDims[1]: prod(inDims)));
+      const dstN = Math.min(16, (step.params.units || step.params.filters || 8));
+      const xL = g.x - 60, xR = g.x + g.w + g.dx + 60;
+      const left=[], right=[];
+      for(let i=0;i<srcN;i++){ const y = g.y + (i+1)*(g.h/(srcN+1)); const c=node('circle',{cx:xL,cy:y,r:3,fill:'#7aa2f7'}); gDense.appendChild(c); left.push({x:xL,y}); }
+      for(let j=0;j<dstN;j++){ const y = g.y + (j+1)*(g.h/(dstN+1)); const c=node('circle',{cx:xR,cy:y,r:3.2,fill:'#8bd5ca'}); gDense.appendChild(c); right.push({x:xR,y}); }
+      const lines=[]; for(const a of left){ for(const b of right){ if(Math.random()<0.45){ const path=node('path',{d:`M ${a.x},${a.y} C ${a.x+40},${a.y-10} ${b.x-40},${b.y+10} ${b.x},${b.y}`, stroke:'rgba(255,255,255,.15)','stroke-width':1.2, fill:'none'}); gDense.appendChild(path); lines.push(path);} } }
+      const pulses=[];
+      Anim.tick((t)=>{
+        if(FXMODE==='epic' && Math.random()<0.25 && lines.length){
+          const L = lines[Math.floor(Math.random()*lines.length)];
+          const len=L.getTotalLength(); const dot=node('circle',{r:2.2, fill:'#f6c177', opacity:1}); gDense.appendChild(dot);
+          pulses.push({el:dot, L, u:0, len});
+        }
+        for(const p of pulses){
+          p.u += 0.02*speed; const pt = p.L.getPointAtLength(p.len * Math.min(1,p.u));
+          if(!p.el) continue;
+          p.el.setAttribute('cx', pt.x); p.el.setAttribute('cy', pt.y); p.el.setAttribute('opacity', 1 - Math.min(1,p.u));
+        }
+        for(let i=pulses.length-1;i>=0;i--){ if(pulses[i].u>=1){ safeRemove(pulses[i].el); pulses.splice(i,1); } }
+      });
+    },
+
+    channelMap(g, Cin, Cout){
+      const sampleIn = Math.max(4, Math.min(24, Math.round(12 * Cin/Math.max(Cin, Cout))));
+      const sampleOut = Math.max(4, Math.min(24, Math.round(12 * Cout/Math.max(Cin, Cout))));
+      const xL = g.x + g.w + g.dx + 16, xR = xL + 90;
+      const col = (n, x, fill)=>{ const ys=[]; for(let i=0;i<n;i++){ const y=g.y + (i+1)*(g.h/(n+1)); gDense.appendChild(node('rect',{x:x-3,y:y-6,width:6,height:12,rx:3,ry:3,fill,opacity:.9})); ys.push(y);} return ys; };
+      const inYs = col(sampleIn, xL, '#7aa2f7'), outYs = col(sampleOut, xR, '#8bd5ca');
+      const funnel = node('path',{d:`M ${xL+6},${g.y} L ${xR-6},${g.y+g.h/2} L ${xL+6},${g.y+g.h} Z`, fill:'rgba(123,162,247,0.08)', stroke:'rgba(255,255,255,.12)'}); gDense.appendChild(funnel);
+      const arcs=[];
+      for(const y1 of inYs){
+        const y2 = outYs[Math.floor(outYs.length * (y1 - g.y)/g.h) % outYs.length];
+        const path = node('path',{d:`M ${xL+6},${y1} Q ${xL+40},${g.y+g.h/2} ${xR-6},${y2}`, stroke:'rgba(255,255,255,.18)', 'stroke-width':1, fill:'none'}); gDense.appendChild(path); arcs.push(path);
+      }
+      Anim.tick((t)=>{ const off = (t/60) % 16; for(const p of arcs){ p.setAttribute('stroke-dasharray','3 3'); p.setAttribute('stroke-dashoffset', off); } });
+      const lbl = node('text',{x:xR, y:g.y-8, 'font-size':12, 'text-anchor':'start', fill:'#9aa4b2'}); lbl.textContent = `通道映射：C ${Cin} → ${Cout}`; gDense.appendChild(lbl);
+    },
+
+    embeddingBars(g, step){
+      const L = stepsGlobal[current].inShape?.dims?.[0] || 16;
+      const show = Math.min(16, L), gap=6, pad=10, baseY = Math.min(STAGE.H - 24, g.y + g.h + 28);
+      for(let i=0;i<show;i++){
+        const w = 28, h = 16, x = g.x + pad + i*(w+gap);
+        gTok.appendChild(node('rect',{x,y:baseY,width:w,height:h,rx:6,ry:6,fill:'#2b3a58',stroke:'rgba(255,255,255,.15)'}));
+        const t = node('text',{x:x+w/2, y:baseY+12, 'font-size':10, 'text-anchor':'middle', fill:'#eaeef7'}); t.textContent='t'+i; gTok.appendChild(t);
+      }
+      const dim = step.params.dim || 128; const bars = Math.min(12, Math.round(dim/16));
+      const vec = node('g',{}); gTok.appendChild(vec);
+      Anim.tick((t)=>{ vec.innerHTML=''; for(let i=0;i<bars;i++){ const bh = 10 + 6*Math.sin((t/400)+(i*0.6)); const rx = g.x + g.w*(i+1)/(bars+1) - 10; const ry = baseY - 24 - bh; vec.appendChild(node('rect',{x:rx, y:ry, width:20, height:bh, rx:4, ry:4, fill:'#7aa2f7', opacity:.85})); } });
+    },
+
+    timeWave(g){
+      const show = 18;
+      const path = node('path',{d:'', stroke:'#8bd5ca', 'stroke-width':2, fill:'none', opacity:.9}); gVec.appendChild(path);
+      Anim.tick((t)=>{ const ptsA=[]; for(let i=0;i<=show;i++){ const x = g.x + (i/show)*g.w; const y = g.y + g.h/2 + 18*Math.sin((i*0.7)+(t/500)); ptsA.push([i===0? 'M':'L', x, y]); } path.setAttribute('d', ptsA.map(p=>`${p[0]} ${p[1]},${p[2]}`).join(' ')); });
+    },
+
+    attentionArcs(g, step){
+      const show = 12, y = Math.min(STAGE.H - 24, g.y + g.h + 40), xs = []; gTok.innerHTML=''; gAtt.innerHTML='';
+      for(let i=0;i<show;i++){ const x = g.x + (i+1)*(g.w/(show+1)); xs.push(x); gTok.appendChild(node('circle',{cx:x,cy:y,r:4,fill:'#7aa2f7'})); }
+      const heads = step.params.heads || 8, arcs=[];
+      for(let h=0; h<Math.min(4,heads); h++){ for(let i=0;i<show;i++){ const j = Math.floor((i*h + 3*h + i*1.3) % show); if(i===j) continue;
+        const midx = (xs[i]+xs[j])/2, midy = y - 40 - 18*h;
+        const path = node('path',{d:`M ${xs[i]},${y} Q ${midx},${midy} ${xs[j]},${y}`, stroke: h%2? '#8bd5ca':'#7aa2f7', 'stroke-width':1.2, 'stroke-dasharray':'4 3', fill:'none', opacity:.65});
+        gAtt.appendChild(path); arcs.push(path);
+      }}
+      Anim.tick((t)=>{ const off = (t/60) % 14; for(const p of arcs){ p.setAttribute('stroke-dashoffset', off); } });
+    },
+
+    reshapeFlow(g){
+      const dots = node('g',{}); gOps.appendChild(dots);
+      const N = 48; const ptsA=[], ptsB=[];
+      for(let i=0;i<N;i++){ const ax = g.x + (i%12 + .5)*(g.w/12), ay = g.y + (Math.floor(i/12)+.5)*(g.h/4); ptsA.push([ax,ay]); }
+      for(let i=0;i<N;i++){ const bx = g.x + (i%8 + .5)*(g.w/8),  by = g.y + (Math.floor(i/8)+.5)*(g.h/6);  ptsB.push([bx,by]); }
+      const circles = []; for(let i=0;i<N;i++){ const c=node('circle',{cx:ptsA[i][0], cy:ptsA[i][1], r:2.2, fill:'#f6c177', opacity:.9}); dots.appendChild(c); circles.push(c); }
+      Anim.tick((t)=>{ const u = 0.5 + 0.5*Math.sin(t/800); for(let i=0;i<N;i++){ const x = ptsA[i][0] + (ptsB[i][0]-ptsA[i][0])*u; const y = ptsA[i][1] + (ptsB[i][1]-ptsA[i][1])*u; circles[i].setAttribute('cx',x); circles[i].setAttribute('cy',y); } });
+      const lbl = node('text',{x:g.x+g.w/2, y:g.y+g.h+18, 'font-size':12, 'text-anchor':'middle', fill:'#9aa4b2'}); lbl.textContent='Reshape：元素守恆'; gOps.appendChild(lbl);
+    },
+
+    concatMerge(g, step){
+      const axis = Number(step.params.axis ?? 0);
+      const ghost = node('rect',{x:g.x-30, y:g.y-20, width:g.w/3, height:g.h/3, rx:6, ry:6, fill:'rgba(122,162,247,.35)', stroke:'rgba(255,255,255,.15)'}); gOps.appendChild(ghost);
+      Anim.tick((t)=>{ const u = 0.5 + 0.5*Math.sin(t/800); ghost.setAttribute('x', g.x - 80*u); ghost.setAttribute('y', g.y + (axis%3===0? -20: (axis%3===1? 20: 0))*u); });
+      const lbl = node('text',{x:g.x+g.w/2, y:g.y-8, 'font-size':12, 'text-anchor':'middle', fill:'#9aa4b2'}); lbl.textContent=`Concat axis=${axis}`; gOps.appendChild(lbl);
+    },
+
+    globalAvg(g){
+      const dots = node('g',{}); gOps.appendChild(dots);
+      const N = 80; const ptsA=[];
+      for(let i=0;i<N;i++){ const ax = g.x + (Math.random())*g.w, ay = g.y + (Math.random())*g.h; ptsA.push([ax,ay]); }
+      const circles = []; for(let i=0;i<N;i++){ const c=node('circle',{cx:ptsA[i][0], cy:ptsA[i][1], r:2, fill:'#7aa2f7', opacity:.7}); dots.appendChild(c); circles.push(c); }
+      const liftX = g.dx*0.85, liftY = g.dy*0.85; const cx=g.x+g.w/2+liftX, cy=g.y+g.h/2+liftY;
+      const target=node('rect',{x:cx-7,y:cy-7,width:14,height:14,rx:3,ry:3,fill:'#8bd5ca',opacity:.0}); gOps.appendChild(target);
+      Anim.tick((t)=>{ const u=Math.min(1,(t/1600)); for(let i=0;i<N;i++){ const x=ptsA[i][0]+(cx-ptsA[i][0])*u; const y=ptsA[i][1]+(cy-ptsA[i][1])*u; circles[i].setAttribute('cx',x); circles[i].setAttribute('cy',y); circles[i].setAttribute('opacity', 0.8*(1-u)); } target.setAttribute('opacity', u); });
+    }
+  };
+
+  function drawSlices(g){
+    $('#slices').innerHTML='';
+    const slices = Math.max(1, Math.min(12, Math.round(g.C / Math.max(1, currentScale.maxC) * 12)));
+    for(let i=slices;i>=1;i--){
+      const ratio = i/slices; const dx = g.dx*ratio*0.9, dy = g.dy*ratio*0.9;
+      const x = g.x + dx, y = g.y + dy, w = g.w, h = g.h;
+      const r = node('rect', {x, y, width:w, height:h, rx:6, ry:6, fill:(FXMODE==='epic'?'url(#gFront)':'rgba(122,162,247,.35)'), opacity: 0.08 + 0.06*ratio});
+      $('#slices').appendChild(r);
+    }
+  }
+
+  function getGeom(shape){
+    const dims = sanitizeDims(shape?.dims || [1]);
+    const M = 36;
+    const {B,H,W,C} = (dims.length>=3) ? toHWC(dims) : (dims.length==2) ? {B:1,H:dims[0], W:dims[1], C:1} : {B:1,H:1, W:dims[0], C:1};
+    const baseW=(STAGE.W-M*2), baseH=(STAGE.H-M*2);
+    const maxWpx = Math.max(120, baseW * 0.62), maxHpx = Math.max(100, baseH * 0.58), maxCpx = Math.max(60, Math.min(baseW,baseH)*0.12);
+    const w = W/Math.max(1,currentScale.maxW)*maxWpx + 60;
+    const h = H/Math.max(1,currentScale.maxH)*maxHpx + 50;
+    const c = C/Math.max(1,currentScale.maxC)*maxCpx + 8;
+    const dx = c*0.8, dy = -c*0.55;
+    let x = STAGE.W/2 - w/2, y = STAGE.H/2 - h/2;
+    x = clamp(M, x, STAGE.W - M - (w + dx)); y = clamp(M, y, STAGE.H - M - h);
+    return {x,y,w,h,c,dx,dy,M,H,W,C,B};
+  }
+
+  function renderCube(shape, prevShape){
+    const safe = sanitizeShape(shape); const safePrev = prevShape? sanitizeShape(prevShape):null;
+    const g = getGeom(safe);
+
+    Anim.stop();
+    const camScale = (FXMODE==='epic') ? 1.0 + 0.02*Math.sin(Date.now()/1200) : 1.0;
+    const camTx = (FXMODE==='epic') ? 6*Math.sin(Date.now()/900) : 0;
+    const camTy = (FXMODE==='epic') ? 4*Math.cos(Date.now()/700) : 0;
+    $('#cam').setAttribute('transform', `translate(${camTx},${camTy}) scale(${camScale})`);
+
+    drawSlices(g);
+
+    faceFront.setAttribute('x', g.x); faceFront.setAttribute('y', g.y);
+    faceFront.setAttribute('width', g.w); faceFront.setAttribute('height', g.h);
+    faceTop.setAttribute('points', pts([[g.x,g.y],[g.x+g.dx,g.y+g.dy],[g.x+g.dx+g.w,g.y+g.dy],[g.x+g.w,g.y]]));
+    faceSide.setAttribute('points', pts([[g.x+g.w,g.y],[g.x+g.w+g.dx,g.y+g.dy],[g.x+g.w+g.dx,g.y+g.dy+g.h],[g.x+g.w,g.y+g.h]]));
+
+    $('#labels').innerHTML='';
+    labelMid(shapeToStr(shape), clamp(g.M, g.x+g.w/2, STAGE.W - g.M), Math.max(18, g.y-18), 18, 800);
+    labelLeft(`H=${g.H}`, g.x-8, g.y+g.h/2);
+    labelMid(`W=${g.W}`, g.x+g.w/2, Math.min(STAGE.H - 8, g.y + g.h + 18));
+    labelRight(`C=${g.C}`, g.x+g.w+g.dx+8, g.y+g.dy+g.h/2);
+    labelMid(`B=${g.B}`, g.x + 16, Math.max(12, g.y - 36), 12, 700);
+
+    if(safePrev){ animateFrom(safePrev, safe, 260 / speed); }
+
+    for(const gfx of [gK,gP,gVec,gDense,gTok,gAtt,gOps]) gfx.innerHTML='';
+
+    const step = stepsGlobal[current];
+    if(step.op==='conv2d') Anim.kernelScan(g, step, RFPROJ);
+    else if(step.op==='maxpool2d') Anim.poolAggregate(g, step, RFPROJ);
+    else if(step.op==='avgpool2d') Anim.poolAverage(g, step, RFPROJ);
+    else if(step.op==='flatten') Anim.flattenBar(g);
+    else if(step.op==='dense') {
+      const inHWC = toHWC(step.inShape.dims), outHWC = toHWC(step.outShape.dims);
+      const isChannelMap = (step.inShape.dims.length>=3 && inHWC.H===1 && inHWC.W===1);
+      if(isChannelMap) Anim.channelMap(g, inHWC.C, outHWC.C);
+      else Anim.featureProject(g, step);
+    }
+    else if(step.op==='embedding') Anim.embeddingBars(g, step);
+    else if(step.op==='rnn' || step.op==='gru' || step.op==='lstm' || step.op==='bilstm') Anim.timeWave(g);
+    else if(step.op==='mhsa') Anim.attentionArcs(g, step);
+    else if(step.op==='reshape' || step.op==='permute') Anim.reshapeFlow(g, step);
+    else if(step.op==='concat') Anim.concatMerge(g, step);
+    else if(step.op==='globalavgpool2d') Anim.globalAvg(g, step, RFPROJ);
+  }
+
+  function animateFrom(prevShape, nextShape, dur=260){
+    const A = getGeom(prevShape), B = getGeom(nextShape); const t0 = performance.now();
+    const ease = t=> t<.5 ? 2*t*t : -1+(4-2*t)*t;
+    function step(now){
+      const tau = clamp(0, (now-t0)/dur, 1), e=ease(tau);
+      const w = A.w + (B.w - A.w)*e, h = A.h + (B.h - A.h)*e, c = A.c + (B.c - A.c)*e;
+      const dx = c * 0.8, dy = -c * 0.55; const x = A.x + (B.x - A.x)*e, y = A.y + (B.y - A.y)*e;
+      faceFront.setAttribute('x', x); faceFront.setAttribute('y', y); faceFront.setAttribute('width', w); faceFront.setAttribute('height', h);
+      faceTop.setAttribute('points', pts([[x,y],[x+dx,y+dy],[x+dx+w,y+dy],[x+w,y]]));
+      faceSide.setAttribute('points', pts([[x+w,y],[x+w+dx,y+dy],[x+w+dx,y+dy+h],[x+w,y+h]]));
+      if(tau<1) requestAnimationFrame(step);
+    } requestAnimationFrame(step);
+  }
+  function labelMid(text, x,y, size=18, weight=800){ const t=node('text',{x,y,'font-size':size,'font-weight':weight,'fill':'#eaeef7','paint-order':'stroke','stroke':'rgba(0,0,0,.25)','stroke-width':2}); t.textContent=text; t.setAttribute('text-anchor','middle'); $('#labels').appendChild(t); }
+  function labelLeft(text, x,y){ const t=node('text',{x,y,'font-size':14,'font-weight':700,'fill':'#eaeef7','paint-order':'stroke','stroke':'rgba(0,0,0,.25)','stroke-width':2}); t.textContent=text; t.setAttribute('text-anchor','end'); $('#labels').appendChild(t); }
+  function labelRight(text, x,y){ const t=node('text',{x,y,'font-size':14,'font-weight':700,'fill':'#eaeef7','paint-order':'stroke','stroke':'rgba(0,0,0,.25)','stroke-width':2}); t.textContent=text; t.setAttribute('text-anchor','start'); $('#labels').appendChild(t); }
+
+  /* ===== 面板 / 控制 ===== */
+  function scaleFromAll(steps){
+    let maxH=1,maxW=1,maxC=1;
+    for(const s of steps){
+      const d = sanitizeDims(s.outShape?.dims||[1]);
+      if(d.length>=3){ const {H,W,C} = toHWC(d); maxH=Math.max(maxH,H); maxW=Math.max(maxW,W); maxC=Math.max(maxC,C); }
+      else if(d.length===2){ maxH=Math.max(maxH,d[0]); maxW=Math.max(maxW,d[1]); }
+      else if(d.length===1){ maxW=Math.max(maxW,d[0]); }
+    } return {maxH,maxW,maxC};
+  }
+
+  function setTimeline(steps){
+    stepsGlobal = steps; current=0; currentScale = scaleFromAll(stepsGlobal);
+    $('#progress').max = Math.max(0, stepsGlobal.length-1); $('#progress').value = 0;
+    renderAndPanel();
+    const list = $('#stepList'); list.innerHTML='';
+    stepsGlobal.forEach((s,i)=>{ const it=document.createElement('div'); it.className='item'; it.textContent=`${i}. ${s.name||s.op}`; it.onclick=()=>{ pause(); current=i; syncProgress(); renderAndPanel(); }; list.appendChild(it); });
+  }
+  function renderAndPanel(){
+    if(!stepsGlobal.length) return;
+    const step = stepsGlobal[current]; const prev = current>0? stepsGlobal[current-1].outShape : null;
+    $('#currentLabel').textContent = `${current}/${stepsGlobal.length-1} ${step.name||step.op}`;
+    $('#infoOp').textContent = step.op.toUpperCase() + (step.note? ` — ${step.note}`:'');
+    $('#infoName').textContent = step.name||'—';
+    $('#infoKind').textContent = step.outShape?.kind || '—';
+    $('#infoFmt').textContent = fmtLabel();
+    $('#shapeIn').textContent = shapeToStr(step.inShape);
+    $('#shapeOut').textContent = shapeToStr(step.outShape);
+    $('#elemCount').textContent = fmtInt(elemCount(step.outShape?.dims||[]));
+    $('#paramCount').textContent = fmtInt(estParams(step)) || '—';
+    $('#macs').textContent = fmtInt(estMACs(step)) || '—';
+    $('#formula').textContent = step.formula || (step.warn? '⚠️ 無法推導完整公式' : '—');
+    renderCube(step.outShape, prev); syncList();
+  }
+  function syncList(){ $$('#stepList .item').forEach((el,i)=> el.classList.toggle('current', i===current)); }
+  function syncProgress(){ $('#progress').value = current; }
+
+  function play(){ if(playing) return; playing = true; $('#playBtn').textContent='暫停';
+    const stepDur = (FXMODE==='epic'? 1100:900) / speed;
+    playTimer = setInterval(()=>{ if(current < stepsGlobal.length-1){ current++; syncProgress(); renderAndPanel(); } else{ pause(); } }, stepDur);
+  }
+  function pause(){ playing=false; $('#playBtn').textContent='播放'; if(playTimer) clearInterval(playTimer); playTimer=null; }
+
+  $('#playBtn').onclick = ()=> playing? pause() : play();
+  $('#prevBtn').onclick = ()=>{ pause(); current=Math.max(0,current-1); syncProgress(); renderAndPanel(); };
+  $('#nextBtn').onclick = ()=>{ pause(); current=Math.min(stepsGlobal.length-1,current+1); syncProgress(); renderAndPanel(); };
+  $('#progress').oninput = e=>{ pause(); current=Number(e.target.value); renderAndPanel(); };
+  $('#speed').oninput = e=>{ speed = Number(e.target.value); if(playing){ pause(); play(); } };
+  $('#fitBtn').onclick = ()=>{ resizeStage(); renderAndPanel(); };
+  $('#themeBtn').onclick = ()=>{ const cur=document.documentElement.getAttribute('data-theme'); document.documentElement.setAttribute('data-theme', cur==='light'?'dark':'light'); };
+  $('#exportBtn').onclick = exportPNG;
+  $('#fmtSel').onchange = (e)=>{ setDataFormat(e.target.value); currentScale = scaleFromAll(stepsGlobal); renderAndPanel(); };
+  $('#fxSel').onchange = (e)=>{ FXMODE = e.target.value; drawStars(); renderAndPanel(); };
+  $('#rfToggle').onchange = (e)=>{ RFPROJ = e.target.checked; renderAndPanel(); };
+
+  $('#parseBtn').onclick = () => parseAll();
+  $('#btnSummaryPlay').onclick = () => parseAll('summary', true);
+  $('#btnDSLPlay').onclick = () => parseAll('dsl', true);
+  $('#loadPreset').onclick = () => { const v=$('#presetSelect').value; $('#dsl').value = presets[v] || ''; Log.info('載入範例', {preset:v}); parseAll('dsl'); };
+  $('#presetSelect').onchange = () => { const v=$('#presetSelect').value; $('#dsl').value = presets[v] || ''; Log.info('選單變更：已載入範例字串', {preset:v}); };
+  $('#jumpByName').addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ const q=e.target.value.trim().toLowerCase(); const idx=stepsGlobal.findIndex(s=> (s.name||'').toLowerCase()===q || s.op.toLowerCase()===q); if(idx>=0){ pause(); current=idx; syncProgress(); renderAndPanel(); } else alert('找不到名稱：' + q); } });
+  document.addEventListener('keydown', (e)=>{ if((e.ctrlKey||e.metaKey) && e.key==='Enter'){ parseAll(); } });
+
+  function parseAll(modeOverride=null, autoPlay=false){
+    Anim.stop();
+    try{
+      const dsl=$('#dsl').value.trim(), summary=$('#summary').value.trim();
+      let stepsS=[], stepsD=[];
+      if(summary){
+        Log.info('開始解析 Keras/torch summary…');
+        stepsS = parseKerasSummary(summary);
+        Log.info('summary 解析完成', {steps:stepsS.length});
+      }
+      if(dsl){
+        stepsD = parseDSL(dsl);
+      }
+
+      const mode = modeOverride || $('#srcMode').value; // auto | summary | dsl | merge
+      let steps = [];
+      if(mode==='summary') steps = stepsS;
+      else if(mode==='dsl') steps = stepsD;
+      else if(mode==='merge'){
+        if(!stepsS.length && !stepsD.length){ alert('沒有可用的 Summary 或 DSL'); return; }
+        if(!stepsS.length){ steps = stepsD; }
+        else if(!stepsD.length){ steps = stepsS; }
+        else {
+          const seed = stepsS[stepsS.length-1].outShape;
+          const after = parseDSL(dsl, seed);
+          steps = stepsS.concat(after.map((s,i)=> ({...s, index: stepsS.length + i})));
+        }
+      }else{ // auto：Summary 優先
+        steps = stepsS.length ? stepsS : stepsD;
+      }
+
+      if(!steps || !steps.length){
+        // Fallback：使用最簡範例，並提示
+        Log.warn('沒有解析到任何步驟，fallback 至 vec_dense');
+        $('#dsl').value = presets.vec_dense;
+        const fallback = parseDSL($('#dsl').value);
+        setTimeline(fallback); resizeStage();
+        alert('解析不到任何步驟：已自動載入最簡範例（vec_dense）。請查看 Log。');
+        return;
+      }
+      setTimeline(steps); resizeStage();
+      Log.info('使用來源', {mode, summarySteps: stepsS.length, dslSteps: stepsD.length, chosen: steps.length});
+      if(autoPlay || $('#autoPlayAfterParse').checked){ play(); }
+    }catch(err){
+      Log.error('解析例外', {message: err.message, stack: String(err.stack||'')});
+      alert('解析錯誤：' + err.message + '（詳見 Log）');
+      // Fallback：避免畫面空白
+      try{
+        $('#dsl').value = presets.vec_dense;
+        const fallback = parseDSL($('#dsl').value);
+        setTimeline(fallback); resizeStage();
+        Log.info('已載入 fallback 範例 vec_dense');
+      }catch(e2){}
+    }
+  }
+
+  function exportPNG(){
+    const s = new XMLSerializer().serializeToString(svg);
+    const blob = new Blob([s], {type:'image/svg+xml;charset=utf-8'}); const url = URL.createObjectURL(blob);
+    const img=new Image(); img.onload=()=>{ const canvas=document.createElement('canvas'); canvas.width=STAGE.W; canvas.height=STAGE.H; const ctx=canvas.getContext('2d');
+      const panelBg=getComputedStyle(document.documentElement).getPropertyValue('--panel')||'#161a22'; ctx.fillStyle=panelBg.trim(); ctx.fillRect(0,0,canvas.width,canvas.height); ctx.drawImage(img,0,0); URL.revokeObjectURL(url);
+      canvas.toBlob(b=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`tensorstep_${Date.now()}.png`; a.click(); }, 'image/png', 0.92);
+    }; img.src=url;
+  }
+
+  /* ===== 估算 ===== */
+  function estParams(step){
+    const op=step.op, p=step.params||{}, inS=step.inShape||{};
+    if(op==='conv2d'){ const {H,W,C}=toHWC(inS.dims); const k=p.kernel||p.k||3, F=p.filters||p.units||C; const useBias=(p.use_bias||'true')!=='false'; return F*(k*k*C + (useBias?1:0)); }
+    if(op==='dense'){ const inDims = sanitizeDims(inS.dims); const inHWC=toHWC(inDims); const isChannelMap=(inDims.length>=3 && inHWC.H===1 && inHWC.W===1); const U=p.units||p.filters||0; const useBias=(p.use_bias||'true')!=='false';
+      if(isChannelMap) return U*inHWC.C;
+      const inFeatures=(inDims.length===2? inDims[1] : prod(inDims)); return U*(inFeatures + (useBias?1:0));
+    }
+    if(op==='embedding'){ const V=p.vocab||0, D=p.dim||128; return V*D; }
+    if(op==='lstm'){ const inDims=sanitizeDims(inS.dims.slice(-2)); const D=inDims[1]; const U=p.units||128; const dir=p.bidirectional?2:1; return dir*4*(D*U + U*U + U); }
+    if(op==='gru'){ const inDims=sanitizeDims(inS.dims.slice(-2)); const D=inDims[1]; const U=p.units||128; const dir=p.bidirectional?2:1; return dir*3*(D*U + U*U + U); }
+    if(op==='rnn'){ const inDims=sanitizeDims(inS.dims.slice(-2)); const D=inDims[1]; const U=p.units||128; return (D*U + U*U + U); }
+    if(op==='mhsa'){ const dims=sanitizeDims(inS.dims); const D=(dims.length===2? dims[1]: (dims.length===1? dims[0]:64)); return 4*D*D; }
+    return 0;
+  }
+  function estMACs(step){
+    const op=step.op, p=step.params||{}, inS=step.inShape||{}, outS=step.outShape||{};
+    if(op==='conv2d'){ const {H,W,C}=toHWC(inS.dims); const k=p.kernel||p.k||3; const F=p.filters||C; const {H:Ho,W:Wo}=toHWC(outS.dims); return Ho*Wo*F*(k*k*C); }
+    if(op==='dense'){ const inDims = sanitizeDims(inS.dims); const inHWC=toHWC(inDims); const isChannelMap=(inDims.length>=3 && inHWC.H===1 && inHWC.W===1); const U=p.units||0;
+      if(isChannelMap) return U*inHWC.C;
+      const inFeatures=(inDims.length===2? inDims[1] : prod(inDims)); return inFeatures*U;
+    }
+    if(op==='embedding'){ return 0; }
+    if(op==='lstm' || op==='gru' || op==='rnn'){ const L = sanitizeDims(inS.dims)[0]||1; const params = estParams(step); return L * params; }
+    if(op==='mhsa'){ const dims=sanitizeDims(inS.dims); const L=dims[0]||1, D=(dims.length===2? dims[1] : 64); return L*L*D; }
+    return 0;
+  }
+
+  /* ===== 範例 / 片段 ===== */
+  const presets = {
+    vec_dense:
+`# 🟢 向量 Dense（最簡）
+input tensor[784]
+dense out units=10
+softmax
+`,
+    mlp:
+`# 🟩 小型 MLP：784 → 256 → 64 → 10
+input tensor[784]
+dense fc1 units=256
+relu
+dense fc2 units=64
+relu
+dense logits units=10
+softmax
+`,
+    cnn_mini:
+`# 🟦 迷你 CNN：32×32×3
+input image[32,32,3] data_format=channels_last
+conv2d c1 filters=16 kernel=3 pad=same
+relu
+maxpool2d p1 size=2
+conv2d c2 filters=32 kernel=3 pad=same
+relu
+maxpool2d p2 size=2
+flatten
+dense out units=10
+softmax
+`,
+    cnn_cifar:
+`# 🟦 CIFAR 風格 CNN（略）
+input image[32,32,3]
+conv2d conv1 filters=32 kernel=3 pad=same
+relu
+conv2d conv2 filters=32 kernel=3 pad=same
+maxpool2d pool1 size=2
+conv2d conv3 filters=64 kernel=3 pad=same
+relu
+conv2d conv4 filters=64 kernel=3 pad=same
+maxpool2d pool2 size=2
+flatten
+dense fc units=128
+relu
+dense logits units=10
+softmax
+`,
+    resblock:
+`# 🟪 ResBlock（簡化示意）
+input image[56,56,64] data_format=channels_last
+conv2d c1 filters=64 kernel=3 pad=same
+relu
+conv2d c2 filters=64 kernel=3 pad=same
+relu
+concat axis=2 add=8
+relu
+maxpool2d size=2
+flatten
+dense out units=10
+`,
+    unet_tiny:
+`# 🟪 U-Net Tiny（簡化）
+input image[128,128,3]
+conv2d d1 filters=32 kernel=3 pad=same
+relu
+maxpool2d size=2
+conv2d d2 filters=64 kernel=3 pad=same
+relu
+maxpool2d size=2
+conv2d bott filters=128 kernel=3 pad=same
+relu
+reshape to=[1,32,32,128]
+conv2d u1 filters=64 kernel=3 pad=same
+relu
+reshape to=[1,64,64,64]
+conv2d u2 filters=32 kernel=3 pad=same
+relu
+reshape to=[1,128,128,32]
+conv2d logits filters=3 kernel=1 pad=same
+`,
+    transformer_tiny:
+`# 🟨 Transformer Encoder（簡化）
+input text[128]
+embedding tok dim=256 vocab=50000
+layernorm ln1
+mhsa attn heads=4
+layernorm ln2
+dense ff1 units=512
+gelu
+dense ff2 units=256
+layernorm ln3
+`,
+    rnn_text:
+`# 🟧 文字 + BiLSTM
+input text[64]
+embedding emb dim=128 vocab=20000
+bilstm enc units=64 return_sequences=false
+dense out units=3
+softmax
+`,
+    channels_dense:
+`# 🧪 通道映射（1×1 等價）：(B,C,H,W)=(1,128,1,1) → (1,10,1,1)
+input image[1,128,1,1] data_format=channels_first
+dense logits units=10
+`,
+    ops_demo:
+`# 🧩 張量操作大全（reshape / permute / squeeze / concat…）
+input tensor[1,128,1,1]
+permute axes=[0,1,3,2]
+squeeze axis=[2,3]
+unsqueeze axis=[2,3]
+reshape to=[1,64,1,2]
+concatenate axis=1 add=10
+ones x dims=[2,3,4]
+zeros y dims=[2,3,4]
+randn z dims=[4,4]
+`
+  };
+  const chipOps = ['input','create','ones','zeros','randn','conv2d','maxpool2d','avgpool2d','globalavgpool2d','flatten','dense','reshape','permute','squeeze','unsqueeze','expand_dims','concat','concatenate','embedding','rnn','gru','lstm','bilstm','batchnorm','layernorm','relu','gelu','softmax','mhsa'];
+  const snippets = {
+    input: 'input image[1,128,1,1] data_format=channels_first',
+    create: 'create type=tensor dims=[2,3,4]',
+    ones: 'ones type=image dims=[32,32,3]',
+    zeros: 'zeros type=tensor dims=[2,3,4]',
+    randn: 'randn type=tensor dims=[4,4]',
+    conv2d: 'conv2d conv1 filters=32 kernel=3 stride=1 pad=same',
+    maxpool2d: 'maxpool2d size=2 stride=2',
+    avgpool2d: 'avgpool2d size=2 stride=2',
+    globalavgpool2d: 'globalavgpool2d',
+    flatten: 'flatten',
+    dense: 'dense fc units=128',
+    reshape: 'reshape to=[1,64,1,2]',
+    permute: 'permute axes=[0,3,1,2]',
+    squeeze: 'squeeze axis=[2,3]',
+    unsqueeze: 'unsqueeze axis=[2]',
+    'expand_dims': 'expand_dims axis=[2]',
+    concat: 'concat axis=1 add=8',
+    concatenate: 'concatenate axis=1 add=8',
+    embedding: 'embedding dim=256 vocab=30000',
+    rnn: 'rnn units=128 return_sequences=true',
+    gru: 'gru units=128 return_sequences=false',
+    lstm: 'lstm units=128 return_sequences=true',
+    bilstm: 'bilstm units=128 return_sequences=false',
+    batchnorm: 'batchnorm',
+    layernorm: 'layernorm',
+    relu: 'relu',
+    gelu: 'gelu',
+    softmax: 'softmax',
+    mhsa: 'mhsa heads=8'
+  };
+  const chipBox=$('#opChips'); chipBox.innerHTML = chipOps.map(op=>`<span class="chip" data-op="${op}">${op}</span>`).join('');
+  chipBox.addEventListener('click', e=>{ const op=e.target?.dataset?.op; if(!op) return; const t=$('#dsl'); const tpl = snippets[op]||op; insertAtCursor(t, tpl+'\n'); t.focus(); });
+  function insertAtCursor(textarea, text){ const s=textarea.selectionStart, e=textarea.selectionEnd, v=textarea.value; textarea.value = v.substring(0,s)+text+v.substring(e); textarea.selectionStart = textarea.selectionEnd = s+text.length; }
+
+  /* 初始化 */
+  document.documentElement.setAttribute('data-theme','dark');
+  setDataFormat('channels_last');
+  drawGrid(); drawStars(); resizeStage();
+
+  // 預設載入一個乾淨可視的範例（失敗則 fallback）
+  try{
+    $('#dsl').value = presets.cnn_mini;
+    const initSteps = parseDSL($('#dsl').value);
+    setTimeline(initSteps);
+    Log.info('初始化：載入預設 cnn_mini');
+  }catch(e){
+    Log.error('初始化解析失敗，fallback vec_dense', {msg:e.message});
+    $('#dsl').value = presets.vec_dense;
+    try{ setTimeline(parseDSL($('#dsl').value)); }catch(_) {}
+  }
+})();
+</script>
+</body>
+</html>
