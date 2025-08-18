@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>3D 運鏡手法模擬｜STL/OBJ + Prompt + LOG</title>
+  <style>
+    :root{ --bg:#0f1115; --panel:#151924; --ink:#e8eefb; --ink-dim:#a8b3c7; --acc:#5aa9ff; --ok:#44d07b; --warn:#ffc14d; --grid:#2a2f3a; }
+    *{box-sizing:border-box}
+    html,body{height:100%; margin:0; background:var(--bg); color:var(--ink);
+      font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,"Noto Sans TC","Helvetica Neue",Arial,"PingFang TC","Microsoft JhengHei",sans-serif;}
+    #app{display:grid; grid-template-rows:auto 1fr auto; height:100%;}
+    header{display:flex; align-items:center; gap:12px; padding:12px 16px; background:#121623; border-bottom:1px solid #1f2532;}
+    header h1{font-size:16px; margin:0; letter-spacing:.5px; color:#eaf2ff}
+    header .tag{font-size:12px; color:#8ea6c9; background:#1a2030; padding:4px 8px; border-radius:999px; border:1px solid #24304a}
+    main.layout{display:grid; grid-template-columns: 1fr 1fr 390px; gap:12px; padding:12px; min-height:0;}
+    .pane{position:relative; background:var(--panel); border:1px solid #1f2532; border-radius:12px; overflow:hidden; min-height:220px;}
+    .pane .title{position:absolute; top:8px; left:10px; font-size:12px; color:#9fb5d6; background:#111622e6; padding:4px 8px; border-radius:8px; border:1px solid #24304a; z-index:3;}
+    #pane-world canvas{position:absolute; inset:0; width:100%; height:100%; display:block;}
+    #pane-camera .stage{position:absolute; inset:0;}
+    #cameraCanvas{position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); display:block;}
+    #camOverlay{position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none; display:block;}
+    .gridlines{position:absolute; inset:0; display:none;} .gridlines.on{display:block;}
+    .gridlines .line{position:absolute; background:rgba(255,255,255,0.12);}
+    .gridlines .v1{left:33.333%; top:0; bottom:0; width:1px;} .gridlines .v2{left:66.666%; top:0; bottom:0; width:1px;}
+    .gridlines .h1{top:33.333%; left:0; right:0; height:1px;} .gridlines .h2{top:66.666%; left:0; right:0; height:1px;}
+
+    .marker{position:absolute; transform:translate(-50%,-50%); display:none;}
+    .marker.on{display:block;}
+    .marker .dot{width:10px; height:10px; border-radius:999px; border:2px solid #8fe1ff; box-shadow:0 0 10px #61d2ff66; position:absolute; left:-5px; top:-5px;}
+    .marker .h{position:absolute; left:-18px; right:-18px; top:-1px; height:2px; background:#8fe1ffaa;}
+    .marker .v{position:absolute; top:-18px; bottom:-18px; left:-1px; width:2px; background:#8fe1ffaa;}
+    .marker .label{position:absolute; top:-22px; left:8px; font-size:11px; color:#bfe9ff; text-shadow:0 1px 2px #000;}
+    .marker.off .dot,.marker.off .h,.marker.off .v{opacity:.35; background:#ff8f8faa; border-color:#ff8f8f;}
+    .marker.off .label{color:#ffc1c1}
+
+    .ui{display:flex; flex-direction:column; gap:12px; padding:12px; background:var(--panel); border:1px solid #1f2532; border-radius:12px; min-height:0; overflow:auto;}
+    .group{border:1px solid #242b3b; background:#121826; border-radius:10px; padding:10px;}
+    .group h3{margin:0 0 8px 0; font-size:13px; color:#cfe2ff; letter-spacing:.3px}
+    .row{display:grid; grid-template-columns:120px 1fr; align-items:center; gap:8px; margin:6px 0;}
+    label{font-size:12px; color:#a7b5cd;}
+    select, input[type="number"], input[type="range"], input[type="color"]{width:100%; background:#0f1422; border:1px solid #27324a; color:var(--ink); padding:6px 8px; border-radius:8px; font-size:12px;}
+    input[type="file"]{font-size:12px; color:#cfe2ff}
+    .btnbar{display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;}
+    button{background:#0e1421; color:#dbe7ff; border:1px solid #24304a; padding:8px 10px; border-radius:8px; font-size:12px; cursor:pointer;}
+    button.primary{background:#0f1c33; border-color:#2e4e83;}
+    button.ok{border-color:#1f5f3a; background:#0f1c1a; color:#c9f7dc;}
+    button.warn{border-color:#5b4b1a; background:#1a160f; color:#ffe5a8;}
+    .toggle{display:flex; align-items:center; gap:8px; font-size:12px; color:#a7b5cd} .toggle input{transform:translateY(1px)}
+    .hud{position:absolute; bottom:10px; left:10px; right:10px; display:flex; justify-content:space-between; align-items:center; gap:10px;
+      background:#0f142280; border:1px solid #22304d; padding:6px 8px; border-radius:8px; font-size:12px; color:#9fb5d6; z-index:3; backdrop-filter: blur(4px);}
+    .chip{padding:2px 6px; border:1px solid #24304a; border-radius:999px; background:#121a2a; color:#bcd0f0; font-size:11px;}
+    .drop{border:1px dashed #2b3a5e; padding:8px; border-radius:8px; color:#9fb5d6; background:#0e1421; text-align:center;}
+    .drop.drag{outline:2px solid #4aa3ff; outline-offset:2px;}
+    footer{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; font-size:12px; color:#8ea6c9; border-top:1px solid #1f2532;}
+    code.k{color:#cbd9ff}
+
+    textarea#promptBox{
+      width:100%; min-height:160px; resize:vertical; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      background:#0f1422; color:#eaf2ff; border:1px solid #27324a; border-radius:8px; padding:8px;
+    }
+    .logbox{background:#0f1422; border:1px solid #27324a; border-radius:8px; height:200px; overflow:auto; font-family:ui-monospace,monospace; font-size:12px; padding:8px; color:#d6e2ff;}
+    .logitem{white-space:pre-wrap; border-bottom:1px dashed #27324a; padding:4px 0;}
+    .logitem:last-child{border-bottom:none;}
+    hr.sep{border:none;border-top:1px solid #24304a; margin:10px 0;}
+    @media (max-width:1200px){ main.layout{grid-template-columns:1fr 1fr; grid-template-rows: 1fr auto;} .ui{grid-column:1 / -1;} }
+    @media (max-width:800px){ main.layout{grid-template-columns:1fr; grid-template-rows:auto auto auto;} }
+  </style>
+
+  <!-- Import Map：修正 'import "three"' 無法解析 -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>3D 運鏡手法模擬</h1>
+      <span class="tag">STL / OBJ 載入</span>
+      <span class="tag">Prompt + LOG</span>
+      <span class="tag">Three.js</span>
+    </header>
+
+    <main class="layout">
+      <!-- 世界（全知）視角 -->
+      <section class="pane" id="pane-world">
+        <div class="title">3D 全知視角（可拖曳旋轉 / 滾輪縮放）</div>
+        <canvas id="worldCanvas"></canvas>
+        <div class="hud" id="worldHud">
+          <div class="chip" id="camPosChip">Cam@()</div>
+          <div class="chip" id="fpsChip">FPS: --</div>
+          <div class="chip">滑鼠：<code class="k">左鍵旋轉</code>，<code class="k">右鍵平移</code>，<code class="k">滾輪縮放</code></div>
+        </div>
+      </section>
+
+      <!-- 鏡頭（2D）視角 -->
+      <section class="pane" id="pane-camera">
+        <div class="title">2D 鏡頭視角（拍出來的畫面）</div>
+        <div class="stage">
+          <canvas id="cameraCanvas"></canvas>
+          <div id="camOverlay">
+            <div class="gridlines" id="gridlines">
+              <i class="line v1"></i><i class="line v2"></i><i class="line h1"></i><i class="line h2"></i>
+            </div>
+            <div id="subjectMarker" class="marker"><i class="dot"></i><i class="h"></i><i class="v"></i><span class="label">SUBJECT</span></div>
+          </div>
+        </div>
+        <div class="hud" id="camHud">
+          <div class="chip" id="lensChip">FOV 50° • 16:9</div>
+          <div class="chip" id="moveChip">Static</div>
+          <div class="chip" id="timeChip">t=0.00s</div>
+        </div>
+      </section>
+
+      <!-- 控制面板（含 Prompt 與 LOG） -->
+      <aside class="ui">
+        <div class="group">
+          <h3>載入模型（STL / OBJ + MTL + 貼圖）</h3>
+          <div class="row">
+            <label>拖放檔案</label>
+            <div id="drop" class="drop">將 <b>.stl</b> 或 <b>.obj</b>（可含 <b>.mtl</b> 與貼圖）拖放到此</div>
+          </div>
+          <div class="row">
+            <label>選擇檔案</label>
+            <input id="fileInput" type="file" accept=".stl,.obj,.mtl,.jpg,.jpeg,.png" multiple>
+          </div>
+          <div class="btnbar">
+            <button id="clearModel">清除目前模型</button>
+            <button id="makeDemo" class="primary">載入範例主體（TorusKnot）</button>
+          </div>
+          <div style="font-size:12px; color:#8ea6c9; margin-top:4px;">提示：OBJ 若含 MTL/貼圖，請一併拖入／選擇；支援中文檔名。</div>
+        </div>
+
+        <div class="group">
+          <h3>運鏡手法</h3>
+          <div class="row">
+            <label for="move">手法</label>
+            <select id="move">
+              <option value="static">Static（靜止）</option>
+              <option value="dollyIn">Dolly In（前進）</option>
+              <option value="dollyOut">Dolly Out（後退）</option>
+              <option value="truckLeft">Truck Left（平移左）</option>
+              <option value="truckRight">Truck Right（平移右）</option>
+              <option value="pedestalUp">Pedestal Up（升高）</option>
+              <option value="pedestalDown">Pedestal Down（降低）</option>
+              <option value="arcLeft">Arc Left（繞行左）</option>
+              <option value="arcRight">Arc Right（繞行右）</option>
+              <option value="crane">Crane（升降+繞行）</option>
+              <option value="panLeft">Pan Left（水平搖鏡）</option>
+              <option value="panRight">Pan Right（水平搖鏡）</option>
+              <option value="tiltUp">Tilt Up（仰搖）</option>
+              <option value="tiltDown">Tilt Down（俯搖）</option>
+              <option value="orbit360">Orbit 360（環繞一圈）</option>
+              <option value="dollyZoom">Dolly Zoom（眩暈）</option>
+            </select>
+          </div>
+          <div class="row">
+            <label for="duration">時長（秒）</label>
+            <input type="number" id="duration" value="6" min="0.5" step="0.1">
+          </div>
+          <div class="row">
+            <label for="speed">播放速度</label>
+            <input type="range" id="speed" min="0.25" max="4" step="0.05" value="1">
+          </div>
+          <div class="row">
+            <label for="easing">緩動</label>
+            <select id="easing">
+              <option value="easeInOutCubic">Ease In-Out（Cubic）</option>
+              <option value="easeInOutSine">Ease In-Out（Sine）</option>
+              <option value="linear">Linear</option>
+            </select>
+          </div>
+          <div class="btnbar">
+            <button id="playBtn" class="ok">▶︎ 播放</button>
+            <button id="pauseBtn" class="warn">⏸ 暫停</button>
+            <button id="resetBtn" class="primary">⟲ 重置</button>
+            <button id="focusBtn" title="找回畫面中的主體">🎯 找回主體</button>
+          </div>
+          <div class="row">
+            <label for="timeline">時間軸</label>
+            <input type="range" id="timeline" min="0" max="1" step="0.001" value="0">
+          </div>
+          <div class="toggle"><input id="loop" type="checkbox" checked> <label for="loop">迴圈播放</label></div>
+          <div class="toggle"><input id="showHelpers" type="checkbox" checked> <label for="showHelpers">顯示路徑/相機輔助</label></div>
+          <div class="toggle"><input id="showSubjectMark" type="checkbox" checked> <label for="showSubjectMark">顯示主體準星（2D）</label></div>
+        </div>
+
+        <div class="group">
+          <h3>拍攝距離（Shot Size）</h3>
+          <div class="row">
+            <label for="shot">距離</label>
+            <select id="shot">
+              <option value="WIDE">WIDER-SHOT（廣角遠）</option>
+              <option value="MEDIUM" selected>MEDIUM-SHOT（中景）</option>
+              <option value="CLOSE">CLOSE-SHOT（近景）</option>
+            </select>
+          </div>
+          <div class="row">
+            <label for="baseFov">基準 FOV（°）</label>
+            <input type="range" id="baseFov" min="20" max="90" step="1" value="50">
+          </div>
+          <div class="row">
+            <label for="radius">基準距離（m）</label>
+            <input type="range" id="radius" min="0.2" max="50" step="0.1" value="4">
+          </div>
+        </div>
+
+        <div class="group">
+          <h3>拍攝角度（Angle）</h3>
+          <div class="row">
+            <label for="angle">角度</label>
+            <select id="angle">
+              <option value="BIRD">鳥瞰（Bird’s-eye）</option>
+              <option value="HIGH">高角度（俯視）</option>
+              <option value="EYE" selected>平視（Eye-level）</option>
+              <option value="LOW">低角度（仰視）</option>
+              <option value="DUTCH">荷蘭式（傾斜）</option>
+            </select>
+          </div>
+          <div class="row">
+            <label for="azimuth">方位（°）</label>
+            <input type="range" id="azimuth" min="-180" max="180" step="1" value="30">
+          </div>
+          <div class="row">
+            <label for="dutch">荷蘭傾角（°）</label>
+            <input type="range" id="dutch" min="-35" max="35" step="1" value="0">
+          </div>
+        </div>
+
+        <div class="group">
+          <h3>2D 畫面設定 & 模型材質</h3>
+          <div class="row">
+            <label for="aspect">長寬比</label>
+            <select id="aspect">
+              <option value="1.7777777778" selected>16:9</option>
+              <option value="1.6">16:10</option>
+              <option value="1.3333333333">4:3</option>
+              <option value="2.39">2.39:1（寬銀幕）</option>
+              <option value="1">1:1</option>
+            </select>
+          </div>
+          <div class="toggle"><input id="grid" type="checkbox"> <label for="grid">顯示構圖格線（Rule of Thirds）</label></div>
+          <hr class="sep">
+          <div class="row"><label for="matMode">材質模式</label>
+            <select id="matMode">
+              <option value="auto" selected>Auto（沿用檔案材質/貼圖）</option>
+              <option value="standard">單一標準材質</option>
+              <option value="wire">線框（Wireframe）</option>
+            </select>
+          </div>
+          <div class="row"><label for="matColor">顏色</label><input type="color" id="matColor" value="#7cb3ff"></div>
+          <div class="row"><label for="metal">金屬度</label><input type="range" id="metal" min="0" max="1" step="0.01" value="0.3"></div>
+          <div class="row"><label for="rough">粗糙度</label><input type="range" id="rough" min="0" max="1" step="0.01" value="0.35"></div>
+          <div class="row"><label for="scale">模型比例</label><input type="range" id="scale" min="0.01" max="10" step="0.01" value="1"></div>
+        </div>
+
+        <div class="group">
+          <h3>教學輔助：鏡頭 Prompt 與事件 LOG</h3>
+          <div class="row">
+            <label for="promptFormat">Prompt 格式</label>
+            <select id="promptFormat">
+              <option value="zh" selected>中文敘述</option>
+              <option value="en">English</option>
+              <option value="json">JSON 規格</option>
+            </select>
+          </div>
+          <div class="row">
+            <label>內容</label>
+            <div>
+              <textarea id="promptBox" readonly></textarea>
+              <div class="btnbar" style="margin-top:6px;">
+                <button id="copyPrompt">複製 Prompt</button>
+                <button id="downloadPrompt">下載 .txt</button>
+                <button id="refreshPrompt" class="primary">重新產生</button>
+              </div>
+            </div>
+          </div>
+          <hr class="sep">
+          <div class="row">
+            <label>事件紀錄</label>
+            <div>
+              <div id="logList" class="logbox" aria-live="polite"></div>
+              <div class="btnbar" style="margin-top:6px;">
+                <button id="copyLog">複製 LOG</button>
+                <button id="downloadLog">下載 .jsonl</button>
+                <button id="clearLog" class="warn">清空</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <footer>
+      <div>快捷鍵：<code class="k">Space</code> 播放/暫停、<code class="k">R</code> 重置、<code class="k">←/→</code> 微調時間、<code class="k">H</code> 輔助開關。</div>
+      <div>Made with Three.js • 教學用途</div>
+    </footer>
+  </div>
+// === MCP Bridge: WebSocket 控制層 ===
+(function(){
+  const WS_URL = (location.origin.startsWith("http"))
+    ? location.origin.replace(/^http/, "ws")
+    : "ws://localhost:5057";
+  let ws;
+
+  function connect(){
+    try{
+      ws = new WebSocket(WS_URL);
+      ws.onopen = ()=> console.log("[mcp-bridge] connected");
+      ws.onclose = ()=> { console.log("[mcp-bridge] closed, retrying..."); setTimeout(connect, 1000); };
+      ws.onmessage = async (ev)=> {
+        let msg;
+        try { msg = JSON.parse(ev.data); } catch { return; }
+        const { id, method, params } = msg || {};
+        const reply = (result)=> ws.readyState===1 && ws.send(JSON.stringify({ id, result }));
+        const fail  = (error)=> ws.readyState===1 && ws.send(JSON.stringify({ id, error: String(error?.message||error) }));
+
+        try{
+          if (method === "getState"){
+            // 取部分必要資訊，避免傳遞循環引用
+            const snapshot = {
+              state,
+              // 下面兩個皆來自你現有 UI 與函式
+              prompt: (typeof promptBox!=="undefined" ? promptBox.value : null),
+              t: state.t,
+            };
+            reply({ state: snapshot });
+          } else if (method === "setParams"){
+            const patch = params||{};
+            // 合法欄位寫入你的 state，然後 refresh()
+            Object.assign(state, patch);
+            // 一些 UI 依賴的副作用：確保視角/投影/材質等更新
+            if (typeof applyFovAspect === "function") applyFovAspect();
+            if (typeof applyMaterialMode === "function") applyMaterialMode();
+            if (typeof updatePathPreview === "function") updatePathPreview();
+            if (typeof layout2DOverlay === "function") layout2DOverlay();
+            if (typeof updateSubjectMarker === "function") updateSubjectMarker();
+            if (typeof updatePromptText === "function") updatePromptText();
+            if (typeof refresh === "function") refresh();
+
+            // 也把 LOG 記一下（你的程式已提供 logEvent）
+            if (typeof logEvent === "function") logEvent("mcp:setParams", { patch });
+            reply({ ok: true, applied: patch });
+          } else if (method === "play"){
+            state.play = true;
+            if (typeof logEvent === "function") logEvent("play:start", { source:"mcp" });
+            reply({ ok: true });
+          } else if (method === "pause"){
+            state.play = false;
+            if (typeof logEvent === "function") logEvent("play:pause", { source:"mcp" });
+            reply({ ok: true });
+          } else if (method === "reset"){
+            state.t = 0;
+            state.play = false;
+            if (typeof timeline!=="undefined") timeline.value = 0;
+            if (typeof refresh === "function") refresh();
+            if (typeof logEvent === "function") logEvent("play:reset", { source:"mcp" });
+            reply({ ok: true });
+          } else if (method === "focus"){
+            // 重用你現有的「找回主體」邏輯
+            if (typeof controls !== "undefined" && typeof subjectFocus !== "undefined") {
+              moveSel.value='static'; angleSel.value='EYE'; azimuthRange.value=30; dutchRange.value=0; shotSel.value='MEDIUM';
+              computeBaseByShot(true); state.t=0; state.play=false; timeline.value=0; controls.target.copy(subjectFocus);
+            }
+            if (typeof refresh === "function") refresh();
+            if (typeof logEvent === "function") logEvent("camera:focus-subject", { source:"mcp" });
+            reply({ ok: true });
+          } else if (method === "makeDemo"){
+            if (typeof makeDemoSubject === "function") makeDemoSubject();
+            if (typeof computeBaseByShot === "function") computeBaseByShot(true);
+            if (typeof refresh === "function") refresh();
+            if (typeof logEvent === "function") logEvent("model:demo-loaded", { source:"mcp" });
+            reply({ ok: true });
+          } else if (method === "getPrompt"){
+            if (typeof updatePromptText === "function") updatePromptText();
+            reply({ prompt: (typeof promptBox!=="undefined" ? promptBox.value : "") });
+          } else if (method === "getLogs"){
+            // 你的程式已經有 logs 陣列與 exportLogsJSONL()
+            let jsonl = "";
+            try{
+              if (typeof exportLogsJSONL === "function") {
+                const blob = exportLogsJSONL();
+                // 在瀏覽器端把 blob 轉文字
+                jsonl = await blob.text();
+              } else if (Array.isArray(logs)) {
+                jsonl = logs.map(l=>JSON.stringify(l)).join("\n");
+              }
+            } catch(e){}
+            reply({ jsonl });
+          } else {
+            fail(`Unknown method: ${method}`);
+          }
+        } catch (err){
+          fail(err);
+        }
+      };
+    } catch (e) {
+      console.warn("[mcp-bridge] connect error", e);
+    }
+  }
+  connect();
+})();
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+    import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+    import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
+
+    /* ==== 全域常數（three.js 以 -Z 為相機前向） ==== */
+    const WORLD_UP = new THREE.Vector3(0, 1, 0);
+
+    /* ==== DOM ==== */
+    const worldCanvas = document.getElementById('worldCanvas');
+    const cameraCanvas = document.getElementById('cameraCanvas');
+    const camOverlay = document.getElementById('camOverlay');
+    const subjectMarker = document.getElementById('subjectMarker');
+    const gridlines = document.getElementById('gridlines');
+    const drop = document.getElementById('drop');
+    const fileInput = document.getElementById('fileInput');
+    const clearBtn = document.getElementById('clearModel');
+    const demoBtn = document.getElementById('makeDemo');
+
+    const moveSel = document.getElementById('move');
+    const durationInput = document.getElementById('duration');
+    const speedInput = document.getElementById('speed');
+    const easingSel = document.getElementById('easing');
+    const playBtn = document.getElementById('playBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const focusBtn = document.getElementById('focusBtn');
+    const timeline = document.getElementById('timeline');
+    const loopCb = document.getElementById('loop');
+    const showHelpersCb = document.getElementById('showHelpers');
+    const showSubjectMarkCb = document.getElementById('showSubjectMark');
+
+    const shotSel = document.getElementById('shot');
+    const baseFovRange = document.getElementById('baseFov');
+    const radiusRange = document.getElementById('radius');
+
+    const angleSel = document.getElementById('angle');
+    const azimuthRange = document.getElementById('azimuth');
+    const dutchRange = document.getElementById('dutch');
+
+    const aspectSel = document.getElementById('aspect');
+    const gridCb = document.getElementById('grid');
+
+    const camPosChip = document.getElementById('camPosChip');
+    const fpsChip = document.getElementById('fpsChip');
+    const lensChip = document.getElementById('lensChip');
+    const moveChip = document.getElementById('moveChip');
+    const timeChip = document.getElementById('timeChip');
+
+    const matModeSel = document.getElementById('matMode');
+    const matColorInput = document.getElementById('matColor');
+    const metalRange = document.getElementById('metal');
+    const roughRange = document.getElementById('rough');
+    const scaleRange = document.getElementById('scale');
+
+    /* ==== Prompt & Log ==== */
+    const promptFormatSel = document.getElementById('promptFormat');
+    const promptBox = document.getElementById('promptBox');
+    const copyPromptBtn = document.getElementById('copyPrompt');
+    const downloadPromptBtn = document.getElementById('downloadPrompt');
+    const refreshPromptBtn = document.getElementById('refreshPrompt');
+    const logList = document.getElementById('logList');
+    const copyLogBtn = document.getElementById('copyLog');
+    const downloadLogBtn = document.getElementById('downloadLog');
+    const clearLogBtn = document.getElementById('clearLog');
+
+    /* ==== 狀態 / 工具 ==== */
+    const state = {
+      play: true, t: 0, duration: 6, speed: 1, loop: true,
+      move: 'static', easing: 'easeInOutCubic',
+      radius: 4, baseFov: 50, shot: 'MEDIUM',
+      angle: 'EYE', azimuthDeg: 30, dutchDeg: 0,
+      aspect: 16/9, showHelpers: true, showSubjectMark: true,
+      matMode: 'auto', matColor: '#7cb3ff', metal: 0.3, rough: 0.35,
+      modelScale: 1,
+    };
+    const Easing = {
+      linear: x => x,
+      easeInOutCubic: x => x<0.5 ? 4*x*x*x : 1 - Math.pow(-2*x+2,3)/2,
+      easeInOutSine: x => -(Math.cos(Math.PI*x)-1)/2,
+    };
+    const deg2rad = d => d*Math.PI/180;
+    const clamp01 = x => Math.max(0, Math.min(1, x));
+    const lerp = (a,b,t) => a + (b-a)*t;
+    const round = (v, n=2)=> Number(v).toFixed(n);
+
+    /* ==== 簡易 LOG（含 runtime 錯誤攔截） ==== */
+    const logs = [];
+    function logEvent(type, data={}){
+      const evt = { ts: new Date().toISOString(), type, ...data };
+      logs.push(evt);
+      const div = document.createElement('div');
+      div.className = 'logitem';
+      div.textContent = `${evt.ts} | ${evt.type} | ${JSON.stringify(data)}`;
+      logList.appendChild(div);
+      logList.scrollTop = logList.scrollHeight;
+    }
+    const debounceMap = new Map();
+    function logDebounced(key, type, data, ms=300){
+      if (debounceMap.has(key)) clearTimeout(debounceMap.get(key));
+      debounceMap.set(key, setTimeout(()=> logEvent(type, data), ms));
+    }
+    function exportLogsJSONL(){ return new Blob([logs.map(l=>JSON.stringify(l)).join('\n')], {type:'application/json'}); }
+    function copyText(txt){ navigator.clipboard?.writeText(txt).catch(()=>{}); }
+    function downloadBlob(blob, filename){ const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=filename; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1500); }
+    window.addEventListener('error', (e)=> logEvent('runtime:error', {message:e.message, src:e.filename, line:e.lineno, col:e.colno}));
+    window.addEventListener('unhandledrejection', (e)=> logEvent('runtime:unhandledrejection', {reason: String(e.reason?.message || e.reason)}));
+
+    /* ==== 場景與燈光 ==== */
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0d1017);
+
+    // 環境光，讓整體亮度提升
+    const ambient = new THREE.AmbientLight(0xffffff, 0.6); // 顏色、強度
+    scene.add(ambient);
+
+    // 也可以略微調整現有燈光強度
+
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(200,200),
+      new THREE.MeshStandardMaterial({ color:0x0b1020, metalness:0, roughness:1 }));
+    floor.rotation.x = -Math.PI/2; floor.position.y = 0; scene.add(floor);
+    const grid = new THREE.GridHelper(200, 200, 0x1d2740, 0x1a2336);
+    grid.material.opacity = 0.25; grid.material.transparent = true; scene.add(grid);
+    const hemi = new THREE.HemisphereLight(0x9ecbff, 0x0d1017, 0.9); // 原本 0.6 → 0.9
+    scene.add(hemi);
+
+    const key = new THREE.DirectionalLight(0xffffff, 1.5); // 原本 1.2 → 1.5
+    key.position.set(5,8,6);
+    key.castShadow = true;
+    scene.add(key);
+
+    const rim = new THREE.DirectionalLight(0x80aaff, 0.8); // 原本 0.5 → 0.8
+    rim.position.set(-4,6,-5);
+    scene.add(rim);
+
+    const fill = new THREE.PointLight(0x88aaff, 0.8, 10); // 原本 0.5 → 0.8
+    fill.position.set(0,2,3);
+    scene.add(fill);
+
+
+    hemi.intensity = 0.9; // 原本 0.6
+    key.intensity = 1.5;  // 原本 1.2
+    rim.intensity = 0.8;  // 原本 0.5
+    fill.intensity = 0.8; // 原本 0.5
+
+    /* ==== 渲染器與相機 ==== */
+    const worldRenderer = new THREE.WebGLRenderer({ canvas: worldCanvas, antialias:true });
+    worldRenderer.setPixelRatio(Math.min(2, window.devicePixelRatio||1));
+    worldRenderer.shadowMap.enabled = true;
+
+    const camRenderer = new THREE.WebGLRenderer({ canvas: cameraCanvas, antialias:true });
+    camRenderer.setPixelRatio(Math.min(2, window.devicePixelRatio||1));
+    camRenderer.shadowMap.enabled = true;
+
+    const worldCamera = new THREE.PerspectiveCamera(60, 1, 0.1, 1000);
+    worldCamera.position.set(8,6,8);
+    const controls = new OrbitControls(worldCamera, worldCanvas);
+    controls.enableDamping = true; controls.target.set(0,1,0);
+
+    const filmCamera = new THREE.PerspectiveCamera(state.baseFov, state.aspect, 0.05, 2000);
+    scene.add(filmCamera);
+
+    // 輔助與圖層
+    const camHelper = new THREE.CameraHelper(filmCamera); scene.add(camHelper);
+    const LAYER_HELPERS = 1;
+    function setLayer(obj, layer){ obj.layers.set(layer); if (obj.children) obj.children.forEach(c => setLayer(c, layer)); }
+    setLayer(camHelper, LAYER_HELPERS);
+    worldCamera.layers.enable(LAYER_HELPERS);
+    filmCamera.layers.disable(LAYER_HELPERS);
+
+    // 路徑線
+    const pathMat = new THREE.LineDashedMaterial({ color:0x4aa3ff, dashSize:0.2, gapSize:0.12, transparent:true, opacity:0.85 });
+    let pathLine = new THREE.Line(new THREE.BufferGeometry(), pathMat);
+    setLayer(pathLine, LAYER_HELPERS); scene.add(pathLine);
+
+    /* ==== 主體 ==== */
+    const subjectGroup = new THREE.Group(); scene.add(subjectGroup);
+    let subjectBounds = null;
+    let subjectRadius = 1;
+    let subjectHeight = 2;
+    const subjectFocus = new THREE.Vector3(0,1.2,0);
+    const subjectHalo = new THREE.Mesh(new THREE.SphereGeometry(0.05,16,16), new THREE.MeshBasicMaterial({color:0xffffff}));
+    subjectHalo.position.copy(subjectFocus); scene.add(subjectHalo);
+
+    function makeDemoSubject(){
+      clearSubject();
+      const knot = new THREE.Mesh(
+        new THREE.TorusKnotGeometry(0.6, 0.2, 160, 32),
+        new THREE.MeshStandardMaterial({ color:0x7cb3ff, metalness:0.3, roughness:0.35 })
+      );
+      knot.castShadow = true;
+      subjectGroup.add(knot);
+      postSubjectChanged();
+      logEvent('model:demo-loaded', {type:'TorusKnot'});
+    }
+    makeDemoSubject();
+
+    function clearSubject(){
+      while(subjectGroup.children.length){
+        const obj = subjectGroup.children.pop();
+        obj.traverse?.(n=>{
+          if(n.geometry) n.geometry.dispose?.();
+          if(n.material){
+            const mats = Array.isArray(n.material) ? n.material : [n.material];
+            mats.forEach(m=>{
+              if(m.map) m.map.dispose?.();
+              m.dispose?.();
+            });
+          }
+        });
+      }
+      logEvent('model:cleared');
+    }
+
+    function applyMaterialMode(){
+      const mode = state.matMode;
+      subjectGroup.traverse(n=>{
+        if (!n.isMesh) return;
+        if (mode==='auto'){
+          n.material.wireframe = false;
+        } else if (mode==='standard'){
+          n.material = new THREE.MeshStandardMaterial({
+            color: new THREE.Color(state.matColor),
+            metalness: state.metal,
+            roughness: state.rough
+          });
+        } else if (mode==='wire'){
+          if (!n.material || !('wireframe' in n.material)){
+            n.material = new THREE.MeshStandardMaterial({ color: 0x88ccff, metalness:0, roughness:1, wireframe:true });
+          } else {
+            n.material.wireframe = true;
+            if ('color' in n.material) n.material.color.set(state.matColor);
+          }
+        }
+        n.material.needsUpdate = true;
+      });
+      logEvent('material:applied', {mode: state.matMode});
+    }
+
+    function postSubjectChanged(){
+      const box = new THREE.Box3().setFromObject(subjectGroup);
+      if (!isFinite(box.min.x)) return;
+      const size = new THREE.Vector3(); box.getSize(size);
+      const center = new THREE.Vector3(); box.getCenter(center);
+
+      subjectGroup.position.x -= center.x;
+      subjectGroup.position.z -= center.z;
+      subjectGroup.position.y -= box.min.y;
+
+      subjectBounds = box; subjectHeight = size.y || 1;
+      const sphere = new THREE.Sphere(); box.getBoundingSphere(sphere);
+      subjectRadius = sphere.radius;
+
+      subjectFocus.set(0, Math.max(0.1, subjectHeight*0.6), 0);
+      subjectHalo.position.copy(subjectFocus);
+
+      computeBaseByShot(true);
+      applyMaterialMode();
+      updatePathPreview();
+      updatePromptText();
+      logEvent('model:normalized', {height: round(subjectHeight,3), radius: round(subjectRadius,3)});
+    }
+
+    /* ==== 相機與運鏡 ==== */
+    function applyFovAspect(){
+      filmCamera.fov = Number(state.baseFov);
+      filmCamera.aspect = Number(state.aspect);
+      filmCamera.updateProjectionMatrix();
+      lensChip.textContent = `FOV ${filmCamera.fov.toFixed(0)}° • ${Number(state.aspect).toFixed(2)}:1`;
+    }
+    function elevationByAngle(){ switch(state.angle){ case 'BIRD':return 80; case 'HIGH':return 25; case 'LOW':return -25; default:return 0; } }
+    function dutchRadians(){ return deg2rad((state.angle==='DUTCH' ? (state.dutchDeg||15) : state.dutchDeg)); }
+    function distanceToFrameHeight(height, fovDeg, margin=1.1){ const f=deg2rad(fovDeg); return (height*margin*0.5)/Math.tan(f/2)+0.001; }
+
+    function computeBaseByShot(fromSubject=false){
+      const map = { WIDE:{fov:70, margin:1.4}, MEDIUM:{fov:50, margin:1.15}, CLOSE:{fov:30, margin:0.8} };
+      const cfg = map[state.shot] || map.MEDIUM;
+      baseFovRange.value = cfg.fov; state.baseFov = cfg.fov;
+
+      let r = 4;
+      if (fromSubject && subjectBounds) r = distanceToFrameHeight(subjectHeight||2, cfg.fov, cfg.margin);
+      else r = { WIDE:8, MEDIUM:4, CLOSE:2 }[state.shot] || 4;
+
+      radiusRange.value = r; state.radius = r;
+      applyFovAspect();
+      logEvent('camera:shot', {shot: state.shot, baseFov: state.baseFov, radius: round(state.radius,3)});
+    }
+
+    function pullStateFromUI(){
+      state.move = moveSel.value; state.duration = Math.max(0.1, Number(durationInput.value));
+      state.speed = Number(speedInput.value); state.easing = easingSel.value;
+      state.shot = shotSel.value; state.baseFov = Number(baseFovRange.value); state.radius = Number(radiusRange.value);
+      state.angle = angleSel.value; state.azimuthDeg = Number(azimuthRange.value); state.dutchDeg = Number(dutchRange.value);
+      state.aspect = Number(aspectSel.value); state.loop = loopCb.checked; state.showHelpers = showHelpersCb.checked; state.showSubjectMark = showSubjectMarkCb.checked;
+      state.matMode = matModeSel.value; state.matColor = matColorInput.value; state.metal = Number(metalRange.value); state.rough = Number(roughRange.value);
+      state.modelScale = Number(scaleRange.value);
+      camHelper.visible = state.showHelpers; pathLine.visible = state.showHelpers; gridlines.classList.toggle('on', gridCb.checked);
+      moveChip.textContent = moveSel.options[moveSel.selectedIndex].textContent || state.move;
+      subjectGroup.scale.setScalar(state.modelScale);
+      applyFovAspect();
+      applyMaterialMode();
+      updatePromptText();
+    }
+
+    function sphToVec(radius, azimuthDeg, elevationDeg){
+      const theta = deg2rad(azimuthDeg);
+      const phi = Math.PI/2 - deg2rad(elevationDeg);
+      const s = new THREE.Spherical(radius, phi, theta);
+      return new THREE.Vector3().setFromSpherical(s);
+    }
+
+    function basePose(){
+      const elevation = elevationByAngle(), azimuth = state.azimuthDeg;
+      const pos = new THREE.Vector3().addVectors(subjectFocus, sphToVec(state.radius, azimuth, elevation));
+      const look = new THREE.Vector3().subVectors(subjectFocus, pos).normalize();
+      const right = new THREE.Vector3().crossVectors(look, WORLD_UP).normalize().negate();
+      const up = new THREE.Vector3().crossVectors(right, look).normalize();
+      return { pos, look, right, up, elevation, azimuth };
+    }
+
+    function ease(t){ const fn = Easing[state.easing] || Easing.linear; return fn(clamp01(t)); }
+
+    function poseAt(t){
+      const k = ease(t), base = basePose();
+      const dollyDist = Math.max(0.2, state.radius*0.6);
+      const truckDist = Math.max(0.5, state.radius*0.5);
+      const arcAngle = 60, pedestal = state.radius*0.35, craneAngle = 45;
+      const panAngle = 40, tiltAngle = 30;
+
+      let startPos = base.pos.clone(), endPos = base.pos.clone();
+      let lookAt = subjectFocus.clone(); let fov = state.baseFov; let applyLookAt = true;
+
+      switch(state.move){
+        case 'static': break;
+        case 'dollyIn': case 'dollyOut': {
+          // 修正：dollyIn 前進、dollyOut 後退
+          const sign = state.move==='dollyIn' ? +1 : -1;
+          const dir = base.look.clone();
+          endPos = base.pos.clone().addScaledVector(dir, sign*dollyDist);
+          break;
+        }
+        case 'truckLeft': case 'truckRight': {
+          const sign = state.move==='truckLeft' ? +1 : -1;
+          const left = base.right.clone();
+          startPos = base.pos.clone().addScaledVector(left, +sign*truckDist/2);
+          endPos   = base.pos.clone().addScaledVector(left, -sign*truckDist/2);
+          break;
+        }
+        case 'pedestalUp': case 'pedestalDown': {
+          const sign = state.move==='pedestalUp' ? +1 : -1;
+          startPos = base.pos.clone().add(new THREE.Vector3(0, -sign*pedestal/2, 0));
+          endPos   = base.pos.clone().add(new THREE.Vector3(0, +sign*pedestal/2, 0));
+          break;
+        }
+        case 'arcLeft': case 'arcRight': {
+          const sign = state.move==='arcLeft' ? +1 : -1;
+          const elev = elevationByAngle(), midAz = state.azimuthDeg;
+          const a0 = midAz - sign*arcAngle/2, a1 = midAz + sign*arcAngle/2;
+          startPos = subjectFocus.clone().add(sphToVec(state.radius, a0, elev));
+          endPos   = subjectFocus.clone().add(sphToVec(state.radius, a1, elev));
+          break;
+        }
+        case 'crane': {
+          const elev = elevationByAngle(), a0 = state.azimuthDeg - craneAngle/2, a1 = state.azimuthDeg + craneAngle/2, r = state.radius;
+          const y0 = subjectFocus.y + Math.sin(deg2rad(+25)) * r;
+          const y1 = subjectFocus.y + Math.sin(deg2rad(-10)) * r;
+          const p0 = subjectFocus.clone().add(sphToVec(r, a0, elev));
+          const p1 = subjectFocus.clone().add(sphToVec(r, a1, elev));
+          p0.y = y0; p1.y = y1; startPos = p0; endPos = p1; break;
+        }
+        case 'panLeft': case 'panRight': {
+          applyLookAt = false; const sign = state.move==='panLeft' ? +1 : -1;
+          const yaw = deg2rad(sign*panAngle*(k-0.5)*2);
+          const forward = base.look.clone();
+          const rotated = forward.clone().applyAxisAngle(WORLD_UP, yaw).normalize();
+          lookAt = base.pos.clone().add(rotated); break;
+        }
+        case 'tiltUp': case 'tiltDown': {
+          applyLookAt = false; const sign = state.move==='tiltUp' ? +1 : -1;
+          const right = base.right.clone().negate();
+          const pitch = deg2rad(sign*tiltAngle*(k-0.5)*2);
+          const forward = base.look.clone();
+          const rotated = forward.clone().applyAxisAngle(right, pitch).normalize();
+          lookAt = base.pos.clone().add(rotated); break;
+        }
+        case 'orbit360': {
+          const elev = elevationByAngle(); const a = state.azimuthDeg + 360*k;
+          startPos = subjectFocus.clone().add(sphToVec(state.radius, a, elev)); endPos = startPos.clone(); break;
+        }
+        case 'dollyZoom': {
+          const dir = base.look.clone();
+          const startD = base.pos.clone().sub(subjectFocus).length();
+          const endD = Math.max(0.2, startD*0.4);
+          const newD = lerp(startD, endD, k);
+          endPos = subjectFocus.clone().addScaledVector(dir, newD*-1);
+          const f0 = deg2rad(state.baseFov)/2;
+          const fHalf = Math.atan((newD/startD)*Math.tan(f0));
+          fov = THREE.MathUtils.radToDeg(fHalf)*2; break;
+        }
+      }
+
+      const pos = new THREE.Vector3().lerpVectors(startPos, endPos, (state.move==='orbit360') ? 1 : k);
+      if (applyLookAt) lookAt = subjectFocus.clone();
+
+      // === three.js 正確的相機基底：前向 -Z ===
+      const z = new THREE.Vector3().subVectors(pos, lookAt).normalize();   // -Z
+      const x = new THREE.Vector3().crossVectors(WORLD_UP, z).normalize(); // +X
+      const y = new THREE.Vector3().crossVectors(z, x).normalize();        // +Y
+      const lookMat = new THREE.Matrix4().makeBasis(x, y, z);
+      const camQuat = new THREE.Quaternion().setFromRotationMatrix(lookMat);
+
+      // 荷蘭式：繞相機自身 -Z 軸旋轉
+      if (state.angle==='DUTCH' || state.dutchDeg!==0){
+        const rollAxis = new THREE.Vector3(0,0,-1).applyQuaternion(camQuat);
+        camQuat.multiply(new THREE.Quaternion().setFromAxisAngle(rollAxis, dutchRadians()));
+      }
+      return { pos, quat: camQuat, fov, lockTarget: !['panLeft','panRight','tiltUp','tiltDown'].includes(state.move) };
+    }
+
+    function applyPose(p){
+      filmCamera.position.copy(p.pos);
+      filmCamera.quaternion.copy(p.quat);
+      filmCamera.fov = (state.move==='dollyZoom') ? p.fov : state.baseFov;
+      filmCamera.updateProjectionMatrix();
+      camHelper.update();
+      camPosChip.textContent = `Cam@(${p.pos.x.toFixed(2)}, ${p.pos.y.toFixed(2)}, ${p.pos.z.toFixed(2)})`;
+    }
+
+    function updatePathPreview(samples = 120){
+      const geo = new THREE.BufferGeometry();
+      const pts = [];
+      for(let i=0;i<=samples;i++){
+        const tt = i/samples; const pose = poseAt(tt);
+        pts.push(pose.pos.x, pose.pos.y, pose.pos.z);
+      }
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+      pathLine.geometry.dispose(); pathLine.geometry = geo; pathLine.computeLineDistances();
+    }
+
+    /* ==== 2D 疊加 ==== */
+    function layout2DOverlay(){
+      const r = cameraCanvas.getBoundingClientRect();
+      camOverlay.style.width = r.width + 'px';
+      camOverlay.style.height = r.height + 'px';
+    }
+    function updateSubjectMarker(){
+      if (!state.showSubjectMark){ subjectMarker.classList.remove('on'); return; }
+      const v = subjectFocus.clone().project(filmCamera);
+      const inFront = v.z < 1; const inScreen = v.x>=-1 && v.x<=1 && v.y>=-1 && v.y<=1;
+      const w = cameraCanvas.clientWidth, h = cameraCanvas.clientHeight;
+      const x = (v.x*0.5+0.5)*w, y = (-v.y*0.5+0.5)*h;
+      subjectMarker.style.left = x.toFixed(1)+'px'; subjectMarker.style.top = y.toFixed(1)+'px';
+      subjectMarker.classList.toggle('on', true);
+      subjectMarker.classList.toggle('off', !(inFront && inScreen));
+      subjectMarker.querySelector('.label').textContent = (inFront && inScreen) ? 'SUBJECT' : 'OUT OF FRAME';
+    }
+
+    /* ==== 迴圈與 Resize ==== */
+    let lastSec = performance.now()/1000, fps = 0, fpsAcc = 0, fpsFrames = 0;
+    function resize(){
+      const wRect = worldCanvas.getBoundingClientRect();
+      worldRenderer.setSize(wRect.width, wRect.height, true);
+      worldCamera.aspect = wRect.width / wRect.height; worldCamera.updateProjectionMatrix();
+
+      const container = document.getElementById('pane-camera');
+      const cRect = container.getBoundingClientRect();
+      let W = cRect.width, H = cRect.height, desired = state.aspect;
+      if (W/H > desired){ W = Math.floor(H*desired); } else { H = Math.floor(W/desired); }
+      camRenderer.setSize(W, H, true);
+      filmCamera.aspect = W/H; filmCamera.updateProjectionMatrix();
+      layout2DOverlay(); applyFovAspect();
+    }
+    const ro1 = new ResizeObserver(resize); ro1.observe(document.getElementById('pane-world'));
+    const ro2 = new ResizeObserver(resize); ro2.observe(document.getElementById('pane-camera'));
+    window.addEventListener('resize', resize); resize();
+
+    function step(){
+      const now = performance.now()/1000, dt = Math.min(0.033, now - lastSec); lastSec = now;
+      if (state.play){
+        const d = dt * state.speed / Math.max(0.0001, state.duration);
+        state.t += d;
+        if (state.t >= 1){ if (state.loop) state.t = state.t % 1; else { state.t = 1; state.play = false; logEvent('play:end'); } }
+        timeline.value = state.t.toFixed(3);
+      }
+      const p = poseAt(state.t); applyPose(p);
+
+      fpsFrames++; fpsAcc += dt;
+      if (fpsAcc >= 0.25){ fps = Math.round(fpsFrames/fpsAcc); fpsFrames=0; fpsAcc=0; fpsChip.textContent = `FPS: ${fps}`; }
+      timeChip.textContent = `t=${(state.t*state.duration).toFixed(2)}s`;
+
+      controls.update();
+      worldRenderer.render(scene, worldCamera);
+      camRenderer.render(scene, filmCamera);
+      updateSubjectMarker();
+
+      requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+
+    /* ==== Prompt 產生 ==== */
+    function updatePromptText(){
+      const fmt = promptFormatSel.value;
+      const p0 = poseAt(0), p1 = poseAt(1);
+      const aspectLabel = (state.aspect===1.7777777778)?'16:9':(state.aspect===1.6)?'16:10':(state.aspect===1.3333333333)?'4:3':(state.aspect===2.39)?'2.39:1':'1:1';
+      const moveLabel = moveSel.options[moveSel.selectedIndex]?.textContent || state.move;
+      const angleLabel = angleSel.options[angleSel.selectedIndex]?.textContent || state.angle;
+      const shotLabel = shotSel.options[shotSel.selectedIndex]?.textContent || state.shot;
+
+      if (fmt==='zh'){
+        promptBox.value = [
+          `主體：自載模型（置中，焦點 ${round(subjectFocus.x)}, ${round(subjectFocus.y)}, ${round(subjectFocus.z)}）`,
+          `鏡頭：${moveLabel}，時長 ${state.duration}s，速度 x${state.speed}，緩動 ${state.easing}${state.move==='dollyZoom'?'（眩暈鏡頭）':''}`,
+          `構圖：${shotLabel}，FOV ${state.baseFov}°，長寬比 ${aspectLabel}`,
+          `角度：${angleLabel}，方位 ${state.azimuthDeg}°，荷蘭傾角 ${state.dutchDeg}°`,
+          `路徑：start(${round(p0.pos.x)}, ${round(p0.pos.y)}, ${round(p0.pos.z)}) → end(${round(p1.pos.x)}, ${round(p1.pos.y)}, ${round(p1.pos.z)})`,
+          `是否鎖定主體：${p0.lockTarget ? '是' : '否'}`
+        ].join('\n');
+      } else if (fmt==='en'){
+        promptBox.value =
+`Subject at focus (${round(subjectFocus.x)}, ${round(subjectFocus.y)}, ${round(subjectFocus.z)}).
+Camera move: ${state.move} (${moveLabel}), duration ${state.duration}s, speed x${state.speed}, easing ${state.easing}${state.move==='dollyZoom'?', dolly-zoom':''}.
+Framing: ${state.shot} shot, FOV ${state.baseFov}°, aspect ${aspectLabel}.
+Angle: ${state.angle} (${angleLabel}), azimuth ${state.azimuthDeg}°, dutch ${state.dutchDeg}°.
+Path: start (${round(p0.pos.x)}, ${round(p0.pos.y)}, ${round(p0.pos.z)}) -> end (${round(p1.pos.x)}, ${round(p1.pos.y)}, ${round(p1.pos.z)}).
+Lock-on subject: ${p0.lockTarget}.`;
+      } else {
+        const spec = {
+          subject: { focus:[+round(subjectFocus.x), +round(subjectFocus.y), +round(subjectFocus.z)],
+                     height:+round(subjectHeight), radius:+round(subjectRadius) },
+          camera: {
+            move: state.move, moveLabel, duration:+state.duration, speed:+state.speed, easing:state.easing,
+            shot: state.shot, fov:+state.baseFov, aspect:+state.aspect,
+            angle: state.angle, azimuthDeg:+state.azimuthDeg, dutchDeg:+state.dutchDeg,
+            path: { start:[+round(p0.pos.x), +round(p0.pos.y), +round(p0.pos.z)],
+                    end:[+round(p1.pos.x), +round(p1.pos.y), +round(p1.pos.z)] },
+            lockTarget: p0.lockTarget
+          }
+        };
+        promptBox.value = JSON.stringify(spec, null, 2);
+      }
+    }
+
+    /* ==== 事件繫結 ==== */
+    function refresh(){ pullStateFromUI(); updatePathPreview(); layout2DOverlay(); updateSubjectMarker(); updatePromptText(); }
+
+    moveSel.addEventListener('change', ()=>{ refresh(); logEvent('camera:move', {move: state.move}); });
+    durationInput.addEventListener('input', ()=>{ logDebounced('dur','camera:duration',{value: Number(durationInput.value)}); refresh(); });
+    speedInput.addEventListener('input', ()=>{ logDebounced('speed','camera:speed',{value: Number(speedInput.value)}); refresh(); });
+    easingSel.addEventListener('change', ()=>{ refresh(); logEvent('camera:easing',{value: state.easing}); });
+
+    shotSel.addEventListener('change', ()=>{ computeBaseByShot(true); refresh(); });
+    baseFovRange.addEventListener('input', ()=>{ logDebounced('fov','camera:fov',{value: Number(baseFovRange.value)}); refresh(); });
+    radiusRange.addEventListener('input', ()=>{ logDebounced('rad','camera:radius',{value: Number(radiusRange.value)}); refresh(); });
+
+    angleSel.addEventListener('change', ()=>{ refresh(); logEvent('camera:angle',{value: state.angle}); });
+    azimuthRange.addEventListener('input', ()=>{ logDebounced('az','camera:azimuth',{value: Number(azimuthRange.value)}); refresh(); });
+    dutchRange.addEventListener('input', ()=>{ logDebounced('dutch','camera:dutch',{value: Number(dutchRange.value)}); refresh(); });
+
+    aspectSel.addEventListener('change', ()=>{ applyFovAspect(); resize(); refresh(); logEvent('camera:aspect',{value: Number(aspectSel.value)}); });
+    loopCb.addEventListener('change', ()=>{ refresh(); logEvent('play:loop',{value: loopCb.checked}); });
+    showHelpersCb.addEventListener('change', ()=>{ refresh(); logEvent('ui:helpers',{value: showHelpersCb.checked}); });
+    showSubjectMarkCb.addEventListener('change', ()=>{ refresh(); logEvent('ui:subjectMark',{value: showSubjectMarkCb.checked}); });
+    gridCb.addEventListener('change', ()=>{ gridlines.classList.toggle('on', gridCb.checked); logEvent('ui:grid',{value: gridCb.checked}); });
+
+    timeline.addEventListener('input', e=>{ state.t = Number(timeline.value); state.play = false; logEvent('timeline:seek',{t: state.t}); });
+
+    playBtn.addEventListener('click', ()=>{ state.play = true; logEvent('play:start'); });
+    pauseBtn.addEventListener('click', ()=>{ state.play = false; logEvent('play:pause'); });
+    resetBtn.addEventListener('click', ()=>{ state.t = 0; state.play = false; timeline.value = 0; refresh(); logEvent('play:reset'); });
+    focusBtn.addEventListener('click', ()=>{
+      moveSel.value='static'; angleSel.value='EYE'; azimuthRange.value=30; dutchRange.value=0; shotSel.value='MEDIUM';
+      computeBaseByShot(true); state.t=0; state.play=false; timeline.value=0; controls.target.copy(subjectFocus); refresh();
+      logEvent('camera:focus-subject');
+    });
+
+    // 材質／比例
+    matModeSel.addEventListener('change', ()=>{ state.matMode = matModeSel.value; applyMaterialMode(); logEvent('material:mode',{value: state.matMode}); updatePromptText(); });
+    matColorInput.addEventListener('input', ()=>{ state.matColor = matColorInput.value; applyMaterialMode(); logDebounced('matcolor','material:color',{value: state.matColor}); });
+    metalRange.addEventListener('input', ()=>{ state.metal = Number(metalRange.value); applyMaterialMode(); logDebounced('metal','material:metal',{value: state.metal}); });
+    roughRange.addEventListener('input', ()=>{ state.rough = Number(roughRange.value); applyMaterialMode(); logDebounced('rough','material:rough',{value: state.rough}); });
+    scaleRange.addEventListener('input', ()=>{ state.modelScale = Number(scaleRange.value); subjectGroup.scale.setScalar(state.modelScale); computeBaseByShot(true); refresh(); logDebounced('scale','model:scale',{value: state.modelScale}); });
+
+    // Prompt 面板按鈕
+    promptFormatSel.addEventListener('change', ()=>{ updatePromptText(); logEvent('prompt:format',{value: promptFormatSel.value}); });
+    copyPromptBtn.addEventListener('click', ()=>{ copyText(promptBox.value); logEvent('prompt:copy'); });
+    downloadPromptBtn.addEventListener('click', ()=>{ downloadBlob(new Blob([promptBox.value], {type:'text/plain'}), `camera_prompt_${Date.now()}.txt`); logEvent('prompt:download'); });
+    refreshPromptBtn.addEventListener('click', ()=>{ updatePromptText(); logEvent('prompt:refresh'); });
+
+    /* ==== 檔案載入（STL / OBJ+MTL） ==== */
+    function buildManager(fileMap){
+      const manager = new THREE.LoadingManager();
+      manager.setURLModifier((url)=>{ const key = decodeURIComponent(url.split('/').pop().toLowerCase()); return fileMap.get(key) || url; });
+      return manager;
+    }
+
+    async function ingestFiles(fileList){
+      const files = Array.from(fileList||[]);
+      if (!files.length) return;
+
+      const fileMap = new Map();
+      files.forEach(f=> fileMap.set(f.name.toLowerCase(), URL.createObjectURL(f)));
+
+      const objFile = files.find(f=>/\.obj$/i.test(f.name));
+      const stlFile = files.find(f=>/\.stl$/i.test(f.name));
+      const mtlFile = files.find(f=>/\.mtl$/i.test(f.name));
+
+      try{
+        if (stlFile){
+          await loadSTL(fileMap.get(stlFile.name.toLowerCase()));
+          logEvent('model:stl-loaded', {name: stlFile.name});
+        }else if (objFile){
+          await loadOBJWithOptionalMTL(
+            fileMap.get(objFile.name.toLowerCase()),
+            mtlFile ? fileMap.get(mtlFile.name.toLowerCase()) : null,
+            fileMap
+          );
+          logEvent('model:obj-loaded', {name: objFile.name, mtl: !!mtlFile});
+        }else{
+          alert('未找到可載入的主檔（需要 .stl 或 .obj）');
+          logEvent('model:error', {reason:'no main file'});
+        }
+      } finally {
+        setTimeout(()=>{ for(const url of fileMap.values()) URL.revokeObjectURL(url); }, 5000);
+      }
+    }
+
+    async function loadSTL(url){
+      const loader = new STLLoader();
+      return new Promise((resolve, reject)=>{
+        loader.load(url, geo=>{
+          const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: new THREE.Color(state.matColor), metalness: state.metal, roughness: state.rough }));
+          clearSubject(); subjectGroup.add(mesh); postSubjectChanged(); resolve();
+        }, undefined, reject);
+      });
+    }
+
+    async function loadOBJWithOptionalMTL(objUrl, mtlUrl, fileMap){
+      const manager = buildManager(fileMap);
+      const objLoader = new OBJLoader(manager);
+      const mtlLoader = new MTLLoader(manager);
+
+      const loadObjOnly = ()=> new Promise((resolve, reject)=>{
+        objLoader.load(objUrl, obj=>{ clearSubject(); subjectGroup.add(obj); postSubjectChanged(); resolve(); }, undefined, reject);
+      });
+      if (!mtlUrl) return loadObjOnly();
+
+      const materials = await new Promise((resolve, reject)=>{
+        mtlLoader.load(mtlUrl, m=>{ m.preload(); resolve(m); }, undefined, reject);
+      });
+      objLoader.setMaterials(materials);
+      return loadObjOnly();
+    }
+
+    // 拖放/選檔
+    drop.addEventListener('dragover', e=>{ e.preventDefault(); drop.classList.add('drag'); });
+    drop.addEventListener('dragleave', ()=> drop.classList.remove('drag'));
+    drop.addEventListener('drop', async e=>{
+      e.preventDefault(); drop.classList.remove('drag');
+      await ingestFiles(e.dataTransfer.files);
+      computeBaseByShot(true); refresh();
+    });
+    fileInput.addEventListener('change', async e=>{
+      await ingestFiles(e.target.files); e.target.value='';
+      computeBaseByShot(true); refresh();
+    });
+    clearBtn.addEventListener('click', ()=>{ clearSubject(); makeDemoSubject(); computeBaseByShot(true); refresh(); });
+    demoBtn.addEventListener('click', ()=>{ makeDemoSubject(); computeBaseByShot(true); refresh(); });
+
+    // 初始化
+    computeBaseByShot(true);
+    pullStateFromUI();
+    updatePathPreview();
+    layout2DOverlay();
+    updateSubjectMarker();
+    updatePromptText();
+    logEvent('app:ready', {ver:'final-fixed'});
+  </script>
+</body>
+</html>
