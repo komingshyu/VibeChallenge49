@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>自助 K 歌吧 · Vocal Split</title>
+    <link rel="icon" href="/assets/favicon.svg" />
+    <link rel="stylesheet" href="/assets/style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <h1>🎤 自助 K 歌吧</h1>
+        <div class="badges">
+          <span class="chip">Demucs</span>
+          <span class="chip">Web Audio</span>
+          <span class="chip">FastAPI</span>
+        </div>
+      </header>
+
+      <main class="container">
+        <section class="uploader card">
+          <h2>上傳歌曲，一鍵分離</h2>
+          <p class="muted">拖曳檔案到此，或點擊選擇。上傳後會自動分離「清唱 / 伴奏」。</p>
+          <div id="dropzone" class="dropzone">
+            <input id="fileInput" type="file" accept="audio/*" />
+            <button id="pickBtn" class="btn">選擇檔案</button>
+          </div>
+          <div id="progress" class="progress hidden">
+            <div class="bar"></div>
+            <span class="label">準備上傳…</span>
+          </div>
+          <div id="queue" class="queue"></div>
+        </section>
+
+        <section class="players card">
+          <h2>播放器 & 效果</h2>
+          <div class="player-grid">
+            <div class="player">
+              <h3>原曲</h3>
+              <audio id="playerOriginal" controls></audio>
+            </div>
+            <div class="player">
+              <h3>清唱</h3>
+              <audio id="playerVocals" controls></audio>
+              <a id="dlVocals" class="link" download>下載清唱</a>
+            </div>
+            <div class="player">
+              <h3>伴奏</h3>
+              <audio id="playerInst" controls></audio>
+              <a id="dlInst" class="link" download>下載伴奏</a>
+            </div>
+          </div>
+
+          <div class="fx-grid">
+            <div class="fx">
+              <label>主音量 <input id="gainMain" type="range" min="0" max="1" step="0.01" value="0.9" /></label>
+              <label>回聲(Delay) <input id="delayTime" type="range" min="0" max="0.8" step="0.01" value="0.00" /></label>
+              <label>殘響(Reverb) <input id="reverbMix" type="range" min="0" max="1" step="0.01" value="0.00" /></label>
+            </div>
+            <div class="fx">
+              <label>低頻 EQ <input id="eqLow" type="range" min="-15" max="15" step="1" value="0" /></label>
+              <label>中頻 EQ <input id="eqMid" type="range" min="-15" max="15" step="1" value="0" /></label>
+              <label>高頻 EQ <input id="eqHigh" type="range" min="-15" max="15" step="1" value="0" /></label>
+            </div>
+            <div class="fx">
+              <label>速度/調性 (一起變) <input id="rate" type="range" min="0.5" max="1.5" step="0.01" value="1.00" /></label>
+              <small class="muted">提示：此滑桿同時改變速度與音高。專業「獨立變調」可日後擴充。</small>
+            </div>
+          </div>
+        </section>
+
+        <section class="karaoke card">
+          <h2>麥克風 & 錄音</h2>
+          <div class="mic-row">
+            <button id="btnMic" class="btn">開啟麥克風</button>
+            <button id="btnRec" class="btn" disabled>開始錄音</button>
+            <a id="dlRec" class="link" download></a>
+          </div>
+          <canvas id="viz" width="900" height="150"></canvas>
+        </section>
+
+        <section class="lyrics card">
+          <h2>歌詞 (LRC)</h2>
+          <div class="lrc-row">
+            <input id="lrcInput" type="file" accept=".lrc,text/plain" />
+            <div id="lrc" class="lrc"></div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="app-footer">
+        <span>Made with ❤️ · 本地端示範</span>
+      </footer>
+    </div>
+
+    <script src="/assets/app.js"></script>
+  </body>
+</html>

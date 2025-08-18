@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>太空穿越飛行模擬器 v2 · 擬真代理 + 隨機路線</title>
+    <meta name="description" content="3D 擬真代理模型 + NASA 高解析圖作為資訊卡；每次載入生成不同導覽路線。" />
+    <link rel="stylesheet" href="./style.css" />
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.1/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.1/examples/jsm/"
+      }
+    }
+    </script>
+  </head>
+  <body>
+    <canvas id="scene"></canvas>
+
+    <div class="hud">
+      <div class="brand">🛰️ SpaceTraverse v2 <span id="seedDisplay" class="seed"></span></div>
+      <div class="controls">
+        <button id="toggleAuto">自動巡航</button>
+        <button id="toggleManual">手動探索</button>
+        <button id="boost">加速</button>
+        <button id="restart">回到起點</button>
+        <button id="newRoute">新路線</button>
+        <label class="edu">
+          <input id="eduMode" type="checkbox" checked>
+          教育資訊
+        </label>
+      </div>
+    </div>
+
+    <div id="infoPanel" class="panel hidden">
+      <div class="panel-header">
+        <h2 id="objName">—</h2>
+        <button id="closePanel" title="關閉">✕</button>
+      </div>
+      <div class="panel-body">
+        <p id="objSummary">—</p>
+        <ul id="objFacts"></ul>
+        <div class="media">
+          <img id="objImage" alt="NASA 預覽圖像" />
+        </div>
+        <div class="links">
+          <a id="nasaLink" href="#" target="_blank" rel="noopener">🔗 NASA 圖庫頁</a>
+          <a id="nasaHD" href="#" target="_blank" rel="noopener">🖼️ 下載最高解析</a>
+        </div>
+      </div>
+      <div class="panel-footer">
+        <small>3D 場景為「擬真代理模型」，2D NASA 圖像僅作為解說用圖卡；非 1:1 物理或尺度模擬。</small>
+      </div>
+    </div>
+
+    <div class="helper">
+      控制：W/A/S/D 或滑鼠拖曳旋轉；滾輪縮放。<br/>
+      提示：圖片只在資訊卡顯示，3D 場景不貼 2D 照片。每次載入路線皆不同（可用 URL ?seed= 固定）。
+    </div>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

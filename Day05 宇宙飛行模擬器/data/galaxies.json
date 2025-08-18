@@ -1,0 +1,87 @@
+[
+  {
+    "name": "銀河系核球（示意）",
+    "kind": "galaxy",
+    "summary": "以粒子構築的棒旋核球與臂結構示意；非真實比例。",
+    "facts": [
+      "銀河系直徑約 >10 萬光年；太陽位於獵戶臂附近。",
+      "此處僅為視覺示意，用以表現核球與螺旋臂星群。"
+    ],
+    "nasaSearch": "Milky Way center Hubble mosaic"
+  },
+  {
+    "name": "雙星系統（互繞質心）",
+    "kind": "binary",
+    "summary": "兩顆不同色溫的恆星繞共同質心運行，常見於銀河系。",
+    "facts": [
+      "真實雙星可互相凌、造成光變；亦可有行星圍繞雙星運轉。",
+      "此為近圓軌道簡化示意。"
+    ],
+    "nasaSearch": "binary star system illustration"
+  },
+  {
+    "name": "三體系統（階層式）",
+    "kind": "triple",
+    "summary": "內近雙星 + 外第三星繞其公轉的階層式三體系統。",
+    "facts": [
+      "三體的長期穩定需要適當的半徑比與軌道傾角。",
+      "此處為視覺化示意。"
+    ],
+    "nasaSearch": "triple star system illustration"
+  },
+  {
+    "name": "可能宜居行星（示意）",
+    "kind": "exo",
+    "summary": "一顆位於恆星可居住帶的海洋藍行星示意（非真實數據）。",
+    "facts": [
+      "可居住帶意指液態水可能存在的軌道距離範圍。",
+      "雲層與大氣暈光以透明材質呈現。"
+    ],
+    "nasaSearch": "exoplanet habitable zone render"
+  },
+  {
+    "name": "黑洞與吸積盤（示意）",
+    "kind": "blackhole",
+    "summary": "黑洞事件視界、吸積盤與對向噴流的視覺化；未包含重力透鏡。",
+    "facts": [
+      "真實吸積盤多波段輻射顯著；此為色帶與透明度的圖像化示意。"
+    ],
+    "nasaSearch": "black hole accretion disk jet simulation"
+  },
+  {
+    "name": "發射星雲（電離氫區）",
+    "kind": "nebula",
+    "summary": "大量加法混合的體積雲粒子堆疊，呈現發光星際雲氣。",
+    "facts": [
+      "實際星雲常以 Hα / OIII / SII 假色呈現多波段結構。"
+    ],
+    "nasaSearch": "emission nebula Hubble mosaic"
+  },
+  {
+    "name": "彗星（塵埃尾與離子尾）",
+    "kind": "comet",
+    "summary": "彗核前進、粒子尾延展的動態示意；尾巴隨時間衰退與補給。",
+    "facts": [
+      "實際彗尾方向受太陽風與軌道決定；此為簡化動態場。"
+    ],
+    "nasaSearch": "comet tail closeup"
+  },
+  {
+    "name": "仙女座星系（M31）",
+    "kind": "galaxy",
+    "summary": "鄰近的大型螺旋星系示意；NASA 圖卡可顯示 Hubble/JWST 影像。",
+    "facts": [
+      "與銀河系約 40 億年後可能合併（長期尺度推估）。"
+    ],
+    "nasaSearch": "Andromeda Galaxy Hubble mosaic M31"
+  },
+  {
+    "name": "迴旋星系（M51）",
+    "kind": "galaxy",
+    "summary": "與伴星互動的典型螺旋星系示意。",
+    "facts": [
+      "藍色年輕星團與粉紅色 HII 區在真實影像中非常明顯。"
+    ],
+    "nasaSearch": "Whirlpool Galaxy M51 Hubble"
+  }
+]

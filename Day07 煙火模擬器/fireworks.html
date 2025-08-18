@@ -1,0 +1,850 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+<title>依山傍海 3D 煙火模擬器（粒子拖尾＋施放區＋正確海流＋新音效）</title>
+
+<!-- Import Map Polyfill -->
+<script async src="https://unpkg.com/es-module-shims@1.10.0/dist/es-module-shims.js"></script>
+
+<!-- Import Map -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+    "lil-gui": "https://unpkg.com/lil-gui@0.18.2/dist/lil-gui.esm.js"
+  }
+}
+</script>
+
+<style>
+  html,body{height:100%;margin:0;background:#0e1830;}
+  canvas{display:block}
+  #hint{
+    position:fixed;left:10px;bottom:10px;color:#dbe3f0;font:12px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+    opacity:.9;background:rgba(0,0,0,.35);padding:6px 8px;border-radius:6px;backdrop-filter: blur(4px);z-index:8;
+  }
+  #hint b{color:#ffffff}
+  /* 施放按鈕在左上，z-index 高避免被面板遮住 */
+  #launchBtn{
+    position:fixed; left:16px; top:16px; z-index:9999;
+    padding:10px 14px; border-radius:10px; border:none; cursor:pointer; user-select:none;
+    background:linear-gradient(#ff7a45,#ff5a36); color:#fff;
+    font:600 14px/1 system-ui,-apple-system,"Segoe UI",Roboto,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+    box-shadow:0 6px 18px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.25);
+  }
+  #launchBtn:hover{ filter:brightness(1.05); }
+  #launchBtn:active{ transform:translateY(1px); }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<button id="launchBtn" aria-label="施放一發煙火" title="施放一發（空白鍵/Enter）">施放</button>
+<div id="hint">拖曳旋轉、滾輪縮放；<b>H</b> 面板、<b>M</b> 小地圖、<b>R</b> 重置視角；按鈕/空白鍵/Enter 施放。</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GUI } from 'lil-gui';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { AfterimagePass } from 'three/addons/postprocessing/AfterimagePass.js';
+
+/* ---------- Renderer / Scene / Camera ---------- */
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+const DPR = Math.min(window.devicePixelRatio || 1, 2);
+renderer.setPixelRatio(DPR);
+renderer.setSize(innerWidth, innerHeight);
+renderer.setClearColor(0x0e1830, 1);           // 夜藍
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.22;            // 安全一點的預設曝光
+renderer.autoClear = false;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0e1830);
+scene.fog = new THREE.FogExp2(0x0e1830, 0.00055); // 可從面板調整
+
+const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 8000);
+const defaultCamPos = new THREE.Vector3(-240, 180, 360);
+const defaultCamTarget = new THREE.Vector3(0, 40, -60);
+camera.position.copy(defaultCamPos);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.copy(defaultCamTarget);
+controls.enableDamping = true;
+controls.maxPolarAngle = Math.PI * 0.5;
+controls.minDistance = 120;
+controls.maxDistance = 1600;
+
+/* ---------- Lights / Moon (天空物件) ---------- */
+const hemi = new THREE.HemisphereLight(0xa5c0ff, 0x141821, 0.9);
+scene.add(hemi);
+
+const moonLight = new THREE.DirectionalLight(0xfaf6e8, 1.55);
+scene.add(moonLight);
+const moon = new THREE.Mesh(new THREE.SphereGeometry(30, 32, 32), new THREE.MeshBasicMaterial({ color: 0xf3efe3 }));
+scene.add(moon);
+
+// 用「天球角度」定位月亮，避免看起來低於地平線
+function setMoonByAngles(azimuthDeg=-35, elevationDeg=32, dist=4000){
+  const az = THREE.MathUtils.degToRad(azimuthDeg);
+  const el = THREE.MathUtils.degToRad(elevationDeg);
+  moon.position.set(
+    dist * Math.cos(el) * Math.cos(az),
+    dist * Math.sin(el),
+    dist * Math.cos(el) * Math.sin(az)
+  );
+  moonLight.position.copy(moon.position.clone().setLength(2000));
+  moonLight.target.position.set(0,0,0);
+  scene.add(moonLight.target);
+}
+setMoonByAngles();
+
+/* ---------- Stars ---------- */
+function createStars(count = 2600, radius = 2800){
+  const geo = new THREE.BufferGeometry();
+  const pos = new Float32Array(count * 3);
+  for(let i=0;i<count;i++){
+    const a = Math.acos(THREE.MathUtils.randFloatSpread(2));
+    const b = Math.random()*Math.PI*2;
+    const r = radius * (0.85 + Math.random()*0.2);
+    pos[i*3] = r * Math.sin(a)*Math.cos(b);
+    pos[i*3+1] = r * Math.cos(a);
+    pos[i*3+2] = r * Math.sin(a)*Math.sin(b);
+  }
+  geo.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  const mat = new THREE.PointsMaterial({
+    size: 2.2, sizeAttenuation: true, color: 0xbdd0ff,
+    transparent: true, opacity: 0.95, depthWrite: false
+  });
+  const stars = new THREE.Points(geo, mat);
+  stars.userData.twinklePhase = Math.random()*Math.PI*2;
+  return stars;
+}
+const stars = createStars();
+scene.add(stars);
+
+/* ---------- Land / Mountains ---------- */
+const landW = 2600, landH = 1600;
+const landGeo = new THREE.PlaneGeometry(landW, landH, 240, 140);
+landGeo.rotateX(-Math.PI/2);
+const lp = landGeo.attributes.position;
+for (let i=0;i<lp.count;i++){
+  const x = lp.getX(i), z = lp.getZ(i);
+  const f1 = Math.sin(x*0.0035) * Math.sin((z-200)*0.0042);
+  const f2 = Math.sin(x*0.017) * 0.25 + Math.cos(z*0.013)*0.2;
+  const ridge = Math.max(0, (-(z+350))/600);
+  let h = (f1*80 + f2*35) * ridge;
+  if (z > -120 && z < 0) h *= (z+120)/120;
+  if (z >= 0) h = 0;
+  lp.setY(i, h);
+}
+landGeo.computeVertexNormals();
+const land = new THREE.Mesh(landGeo, new THREE.MeshStandardMaterial({
+  color: 0x4a5563, roughness: 0.88, metalness: 0.10
+}));
+scene.add(land);
+
+/* ---------- Sea（沿岸→外海的流向） ---------- */
+const seaGeo = new THREE.PlaneGeometry(2600, 2200, 180, 140);
+seaGeo.rotateX(-Math.PI/2);
+seaGeo.translate(0, 0.05, 700);
+const sea = new THREE.Mesh(seaGeo, new THREE.MeshStandardMaterial({
+  color: 0x1673a3, roughness: 0.32, metalness: 0.95, envMapIntensity: 1.3
+}));
+scene.add(sea);
+const seaBase = seaGeo.attributes.position.array.slice();
+
+/* ---------- City ---------- */
+const city = new THREE.Group(); scene.add(city);
+(function buildCity(){
+  const boxGeo = new THREE.BoxGeometry(1,1,1);
+  const boxMat = new THREE.MeshStandardMaterial({
+    color: 0x3d4754, roughness: 0.72, metalness: 0.28,
+    emissive: 0x111419, emissiveIntensity: 1.4, vertexColors: true
+  });
+  const count = 560;
+  const inst = new THREE.InstancedMesh(boxGeo, boxMat, count);
+  const c = new THREE.Color();
+  const dummy = new THREE.Object3D();
+  for (let i=0;i<count;i++){
+    const x = THREE.MathUtils.randFloatSpread(1200);
+    const z = -THREE.MathUtils.randFloat(80, 520);
+    const baseH = 6 + Math.random()*18;
+    const tall = baseH + Math.pow(Math.random(), 0.6) * 180;
+    const w = 14 + Math.random()*26, d = 12 + Math.random()*24;
+    dummy.position.set(x, tall/2, z);
+    dummy.scale.set(w, tall, d);
+    dummy.rotation.y = Math.random()*Math.PI;
+    dummy.updateMatrix(); inst.setMatrixAt(i, dummy.matrix);
+    c.setHSL(0.6 + Math.random()*0.05, 0.10, 0.30 + Math.random()*0.08);
+    inst.setColorAt(i, c);
+  }
+  city.add(inst);
+
+  const lightsCount = 1200;
+  const lpos = new Float32Array(lightsCount*3);
+  for (let j=0;j<lightsCount;j++){
+    lpos[j*3] = THREE.MathUtils.randFloatSpread(1200);
+    lpos[j*3+1] = 8 + Math.random()*100;
+    lpos[j*3+2] = -THREE.MathUtils.randFloat(60, 540);
+  }
+  const lightGeo = new THREE.BufferGeometry();
+  lightGeo.setAttribute('position', new THREE.BufferAttribute(lpos,3));
+  const cityLights = new THREE.Points(lightGeo, new THREE.PointsMaterial({
+    size: 4.2, sizeAttenuation: true, color: 0xffe9bf,
+    transparent: true, opacity: 0.98, blending: THREE.AdditiveBlending, depthWrite: false
+  }));
+  city.add(cityLights);
+})();
+
+/* ---------- 固定施放區（海上浮台） ---------- */
+const launchMarker = new THREE.Group();
+scene.add(launchMarker);
+const platform = new THREE.Mesh(
+  new THREE.CylinderGeometry(50, 50, 6, 32),
+  new THREE.MeshStandardMaterial({ color: 0x2c2f35, metalness: 0.6, roughness: 0.4, emissive: 0x070809 })
+);
+platform.position.y = 3;
+launchMarker.add(platform);
+const ring = new THREE.Mesh(
+  new THREE.RingGeometry(56, 60, 64),
+  new THREE.MeshBasicMaterial({ color: 0x49c0ff, side: THREE.DoubleSide })
+);
+ring.rotation.x = -Math.PI/2;
+ring.position.y = 6.1;
+launchMarker.add(ring);
+
+/* ---------- 後處理：Bloom（預設適中） + Afterimage（預設關） ---------- */
+const composer = new EffectComposer(renderer);
+composer.setPixelRatio(DPR);
+composer.setSize(innerWidth, innerHeight);
+const renderPass = new RenderPass(scene, camera);
+const bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.75, 0.35, 0.85);
+const afterimage = new AfterimagePass(0.965);
+afterimage.enabled = false; // 預設不用殘影
+composer.addPass(renderPass);
+composer.addPass(bloomPass);
+composer.addPass(afterimage);
+
+/* ---------- 粒子貼圖 ---------- */
+function makeSparkTexture(size=128){
+  const cnv = document.createElement('canvas'); cnv.width = cnv.height = size;
+  const ctx = cnv.getContext('2d');
+  const g = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+  g.addColorStop(0.0, 'rgba(255,255,255,1)');
+  g.addColorStop(0.35,'rgba(255,255,255,0.9)');
+  g.addColorStop(0.7, 'rgba(255,255,255,0.25)');
+  g.addColorStop(1.0, 'rgba(255,255,255,0)');
+  ctx.fillStyle = g; ctx.fillRect(0,0,size,size);
+  const tex = new THREE.CanvasTexture(cnv);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.minFilter = THREE.LinearMipMapLinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.generateMipmaps = true;
+  return tex;
+}
+const sparkTex = makeSparkTexture();
+
+/* ---------- TrailSystem（真正的粒子拖尾） ---------- */
+class TrailSystem {
+  constructor(max=18000, size=7){
+    this.max = max;
+    this.pos = new Float32Array(max*3);
+    this.col = new Float32Array(max*3);
+    this.base = new Float32Array(max*3);
+    this.vel = new Float32Array(max*3);
+    this.life = new Float32Array(max);
+    this.maxLife = new Float32Array(max);
+    this.cursor = 0;
+
+    this.geo = new THREE.BufferGeometry();
+    this.geo.setAttribute('position', new THREE.BufferAttribute(this.pos,3));
+    this.geo.setAttribute('color', new THREE.BufferAttribute(this.col,3));
+
+    this.mat = new THREE.PointsMaterial({
+      size: size,
+      sizeAttenuation: true,
+      map: sparkTex, alphaMap: sparkTex,
+      transparent: true, depthWrite: false,
+      blending: THREE.AdditiveBlending, vertexColors: true, opacity: 0.95
+    });
+
+    this.points = new THREE.Points(this.geo, this.mat);
+    this.points.frustumCulled = true;
+  }
+  setSize(s){ this.mat.size = s; }
+  spawn(v3, color, life=0.6, vxyz={x:0,y:0,z:0}){
+    // 循環覆蓋
+    const i = this.cursor;
+    this.cursor = (this.cursor + 1) % this.max;
+
+    this.pos[i*3]   = v3.x; this.pos[i*3+1] = v3.y; this.pos[i*3+2] = v3.z;
+    this.base[i*3]  = color.r; this.base[i*3+1] = color.g; this.base[i*3+2] = color.b;
+    this.col[i*3]   = color.r; this.col[i*3+1] = color.g; this.col[i*3+2] = color.b;
+    this.vel[i*3]   = vxyz.x; this.vel[i*3+1] = vxyz.y; this.vel[i*3+2] = vxyz.z;
+    this.life[i]    = life; this.maxLife[i] = life;
+    // 立刻標記更新
+    this.geo.attributes.position.needsUpdate = true;
+    this.geo.attributes.color.needsUpdate = true;
+  }
+  update(dt, gravity=10, wind=0){
+    let dirty = false;
+    for (let i=0;i<this.max;i++){
+      const li = this.life[i];
+      if (li <= 0) continue;
+      // 物理
+      this.vel[i*3]   += wind * 0.3 * dt;
+      this.vel[i*3+1] -= gravity * 0.5 * dt;
+      this.pos[i*3]   += this.vel[i*3]   * dt;
+      this.pos[i*3+1] += this.vel[i*3+1] * dt;
+      this.pos[i*3+2] += this.vel[i*3+2] * dt;
+      // 壽命與亮度
+      this.life[i] = li - dt;
+      const t = Math.max(0, this.life[i] / this.maxLife[i]); // 0~1
+      const f = t*t; // 二次衰減亮度
+      this.col[i*3]   = this.base[i*3]   * f;
+      this.col[i*3+1] = this.base[i*3+1] * f;
+      this.col[i*3+2] = this.base[i*3+2] * f;
+      dirty = true;
+    }
+    if (dirty){
+      this.geo.attributes.position.needsUpdate = true;
+      this.geo.attributes.color.needsUpdate = true;
+    }
+  }
+}
+const trailSystem = new TrailSystem(20000, 7);
+scene.add(trailSystem.points);
+
+/* ---------- Audio（新版：whoosh + boom + crackle） ---------- */
+let audioEnabled = false;
+const listener = new THREE.AudioListener();
+camera.add(listener);
+const audioContext = listener.context;
+const masterGain = audioContext.createGain();
+masterGain.gain.value = 0.9;
+masterGain.connect(audioContext.destination);
+
+function createNoiseBuffer(duration=1.5){
+  const sr = audioContext.sampleRate;
+  const buf = audioContext.createBuffer(1, Math.floor(sr*duration), sr);
+  const data = buf.getChannelData(0);
+  for (let i=0;i<data.length;i++) data[i] = (Math.random()*2-1);
+  return buf;
+}
+const noiseBuf = createNoiseBuffer(2.0);
+
+function playLaunchSound(pos){
+  if (!audioEnabled || !params.audioOn) return;
+  const src = audioContext.createBufferSource(); src.buffer = noiseBuf;
+  const bp = audioContext.createBiquadFilter(); bp.type = 'bandpass';
+  const gain = audioContext.createGain();
+  const pan = audioContext.createPanner();
+  pan.panningModel = 'HRTF'; pan.distanceModel = 'inverse';
+  pan.refDistance = 120; pan.rolloffFactor = 1.2; pan.maxDistance = 2000;
+  pan.positionX.value = pos.x; pan.positionY.value = pos.y; pan.positionZ.value = pos.z;
+
+  const now = audioContext.currentTime;
+  bp.frequency.setValueAtTime(300, now);
+  bp.frequency.exponentialRampToValueAtTime(1400, now+0.35);
+  bp.Q.value = 8;
+
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.5*params.volume, now+0.05);
+  gain.gain.exponentialRampToValueAtTime(0.002, now+0.45);
+
+  src.playbackRate.setValueAtTime(0.8, now);
+  src.playbackRate.linearRampToValueAtTime(1.0, now+0.4);
+
+  src.connect(bp); bp.connect(gain); gain.connect(pan); pan.connect(masterGain);
+  src.start(now); src.stop(now+0.5);
+}
+
+function playExplosionSound(pos){
+  if (!audioEnabled || !params.audioOn) return;
+  const now = audioContext.currentTime;
+
+  // 低頻 BOOM
+  const boomSrc = audioContext.createBufferSource(); boomSrc.buffer = noiseBuf;
+  const low = audioContext.createBiquadFilter(); low.type='lowpass'; low.frequency.value = 260;
+  const boomGain = audioContext.createGain();
+  const pan = audioContext.createPanner();
+  pan.panningModel='HRTF'; pan.distanceModel='inverse';
+  pan.refDistance=150; pan.rolloffFactor=1.1; pan.maxDistance=2500;
+  pan.positionX.value = pos.x; pan.positionY.value = pos.y; pan.positionZ.value = pos.z;
+
+  boomGain.gain.setValueAtTime(0.7*params.volume, now);
+  boomGain.gain.exponentialRampToValueAtTime(0.001, now+1.0);
+
+  boomSrc.connect(low); low.connect(boomGain); boomGain.connect(pan); pan.connect(masterGain);
+  boomSrc.start(now); boomSrc.stop(now+1.05);
+
+  // 高頻 crackle
+  for (let i=0;i<6;i++){
+    const t = now + 0.05 + Math.random()*0.25;
+    const crack = audioContext.createBufferSource(); crack.buffer = noiseBuf;
+    const hp = audioContext.createBiquadFilter(); hp.type='highpass'; hp.frequency.value = 1200 + Math.random()*3000;
+    const q = audioContext.createBiquadFilter(); q.type='bandpass'; q.frequency.value = 2000 + Math.random()*2000; q.Q.value = 4;
+    const g = audioContext.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.18*params.volume, t+0.015);
+    g.gain.exponentialRampToValueAtTime(0.001, t+0.18);
+
+    crack.connect(hp); hp.connect(q); q.connect(g); g.connect(pan);
+    crack.start(t); crack.stop(t+0.2+Math.random()*0.1);
+  }
+}
+
+/* ---------- 參數 & GUI ---------- */
+const params = {
+  // 煙火
+  spawnRate: 0.9,
+  particleCount: 360,
+  color: '#ff7043',
+  multicolor: true,
+  gravity: 32,
+  explosionSize: 60,
+  rocketSpeed: 165,
+  wind: 1.6,
+  particleSize: 10,
+  maxScreenSize: 32,
+  shape: 'random', // 'sphere' | 'ring' | 'star5' | 'random'
+
+  // 拖尾
+  tailMode: 'particles',  // 'particles' | 'afterimage' | 'off'
+  trailSize: 7,
+  trailLife: 0.6,
+  trailEmitRocket: 220,   // 每秒產生的尾巴粒子（火箭）
+  trailEmitShard: 90,     // 每秒產生的尾巴粒子（碎星）
+
+  // 施放區
+  launchX: 0,
+  launchZ: 520,
+  launchRadius: 120,
+
+  // 環境/效果
+  moonAzimuth: -35,
+  moonElevation: 32,
+  waves: 1.0,
+  starGlow: 1.0,
+  exposure: renderer.toneMappingExposure,
+  bloomStrength: bloomPass.strength,
+  bloomRadius: bloomPass.radius,
+  bloomThreshold: bloomPass.threshold,
+  fogDensity: scene.fog.density,
+
+  // 音效
+  audioOn: true,
+  volume: 0.9,
+
+  showMinimap: true
+};
+
+// 浮台到施放中心
+launchMarker.position.set(params.launchX, 0, params.launchZ);
+
+/* GUI */
+const gui = new GUI({ title: '煙火控制面板' });
+
+const gFire = gui.addFolder('煙火');
+gFire.add(params, 'spawnRate', 0, 4, 0.1).name('施放頻率（/秒）');
+gFire.addColor(params, 'color').name('顏色（單色）');
+gFire.add(params, 'multicolor').name('繽紛隨機色');
+gFire.add(params, 'particleCount', 50, 1600, 10).name('粒子密度（每發）');
+gFire.add(params, 'explosionSize', 20, 140, 1).name('爆炸半徑');
+gFire.add(params, 'gravity', 10, 60, 1).name('重力');
+gFire.add(params, 'rocketSpeed', 60, 260, 1).name('火箭初速');
+gFire.add(params, 'wind', -8, 8, 0.1).name('風力');
+gFire.add(params, 'particleSize', 3, 18, 0.5).name('粒子尺寸');
+gFire.add(params, 'maxScreenSize', 8, 64, 1).name('近距像素上限');
+gFire.add(params, 'shape', ['random','sphere','ring','star5']).name('形狀');
+
+const gTail = gui.addFolder('拖尾');
+gTail.add(params, 'tailMode', ['particles','afterimage','off']).name('方式').onChange(updateTailMode);
+gTail.add(params, 'trailSize', 1, 20, 0.5).name('尾巴尺寸').onChange(v=>trailSystem.setSize(v));
+gTail.add(params, 'trailLife', 0.2, 2.0, 0.05).name('尾巴壽命');
+gTail.add(params, 'trailEmitRocket', 20, 600, 10).name('發射密度/秒');
+gTail.add(params, 'trailEmitShard', 0, 240, 10).name('碎星密度/秒');
+
+const gArea = gui.addFolder('施放區（浮台）');
+gArea.add(params, 'launchX', -800, 800, 1).name('中心 X').onChange(()=>launchMarker.position.x=params.launchX);
+gArea.add(params, 'launchZ', 120, 1200, 1).name('中心 Z').onChange(()=>launchMarker.position.z=params.launchZ);
+gArea.add(params, 'launchRadius', 20, 300, 1).name('半徑');
+
+const gEnv = gui.addFolder('環境/效果');
+gEnv.add(params, 'waves', 0, 2.5, 0.05).name('海浪');
+gEnv.add(params, 'starGlow', 0.2, 2.0, 0.05).name('星光');
+gEnv.add(params, 'exposure', 0.6, 2.0, 0.01).name('曝光').onChange(v=>renderer.toneMappingExposure=v);
+gEnv.add(params, 'bloomStrength', 0, 2.5, 0.05).name('Bloom 強度').onChange(v=>bloomPass.strength=v);
+gEnv.add(params, 'bloomRadius', 0, 1.5, 0.01).name('Bloom 半徑').onChange(v=>bloomPass.radius=v);
+gEnv.add(params, 'bloomThreshold', 0, 1, 0.01).name('Bloom 閾值').onChange(v=>bloomPass.threshold=v);
+gEnv.add(params, 'fogDensity', 0, 0.002, 0.00005).name('霧密度').onChange(v=>scene.fog.density=v);
+
+const gMoon = gui.addFolder('月球');
+gMoon.add(params, 'moonAzimuth', -180, 180, 1).name('方位角').onChange(()=>setMoonByAngles(params.moonAzimuth, params.moonElevation));
+gMoon.add(params, 'moonElevation', 5, 75, 1).name('仰角').onChange(()=>setMoonByAngles(params.moonAzimuth, params.moonElevation));
+
+const gAudio = gui.addFolder('音效');
+gAudio.add(params, 'audioOn').name('啟用音效');
+gAudio.add(params, 'volume', 0, 5.0, 0.1).name('音量').onChange(v=>masterGain.gain.value=v);
+gui.close();
+
+function updateTailMode(){
+  // 啟用/停用後處理殘影；粒子拖尾總是存在但可視性依模式調整
+  afterimage.enabled = (params.tailMode === 'afterimage');
+  trailSystem.points.visible = (params.tailMode !== 'off');
+}
+updateTailMode();
+
+/* ---------- 小地圖 ---------- */
+const miniCam = new THREE.OrthographicCamera(-1600, 1600, 1600, -1600, 1, 5000);
+miniCam.position.set(0, 2600, 0); miniCam.lookAt(0,0,0);
+const camMarker = new THREE.ArrowHelper(new THREE.Vector3(1,0,0), new THREE.Vector3(0,2,0), 120, 0xff4444, 40, 24);
+// 關鍵：遞迴放到 layer 1，主鏡頭禁看，避免「海底紅光」
+camMarker.traverse(o => o.layers.set(1));
+scene.add(camMarker);
+camera.layers.enable(0);
+camera.layers.disable(1);
+miniCam.layers.enable(1);
+
+/* ---------- 工具 ---------- */
+function randomHueColor(sat=0.95, light=0.6){
+  const col = new THREE.Color(); col.setHSL(Math.random(), sat, light); return col;
+}
+
+/* ---------- 煙火 ---------- */
+const fireworks = [];
+let spawnAccumulator = 0;
+
+class Firework {
+  constructor(){
+    // 施放區（圓盤）取樣
+    const a = Math.random() * Math.PI * 2;
+    const r = Math.sqrt(Math.random()) * params.launchRadius;
+    const x = params.launchX + Math.cos(a) * r;
+    const z = params.launchZ + Math.sin(a) * r;
+    this.origin = new THREE.Vector3(x, 1, z);
+
+    // 上升火箭
+    this.rocket = new THREE.Mesh(
+      new THREE.SphereGeometry(1.2, 10, 10),
+      new THREE.MeshBasicMaterial({ color: 0xfff0d0 })
+    );
+    this.rocket.position.copy(this.origin);
+    scene.add(this.rocket);
+
+    const angleBias = THREE.MathUtils.degToRad(THREE.MathUtils.randFloatSpread(6));
+    const dir = new THREE.Vector3(Math.sin(angleBias)*0.3, 1, Math.cos(angleBias)*0.3).normalize();
+    this.vel = dir.multiplyScalar(params.rocketSpeed * (0.8 + Math.random()*0.5));
+    this.maxAlt = THREE.MathUtils.randFloat(160, 320) + Math.random()*140;
+    this.exploded = false;
+
+    // 形狀
+    this.shape = params.shape === 'random'
+      ? ['sphere','ring','star5'][Math.floor(Math.random()*3)]
+      : params.shape;
+
+    // 拖尾累積器（粒子模式）
+    this._trailAcc = 0;
+
+    playLaunchSound(this.origin);
+  }
+
+  explode(){
+    this.exploded = true;
+    const center = this.rocket.position.clone();
+    scene.remove(this.rocket);
+
+    const n = Math.max(40, Math.floor(params.particleCount));
+    const geo = new THREE.BufferGeometry();
+    const pos = new Float32Array(n*3);
+    const vel = new Float32Array(n*3);
+    const col = new Float32Array(n*3);
+
+    const base = new THREE.Color(params.color);
+    const useRandom = params.multicolor;
+    const speedBase = params.explosionSize;
+
+    const setParticle = (i, dir, speed, color) => {
+      pos[i*3]   = center.x; pos[i*3+1] = center.y; pos[i*3+2] = center.z;
+      vel[i*3]   = dir.x * speed;
+      vel[i*3+1] = dir.y * speed;
+      vel[i*3+2] = dir.z * speed;
+      col[i*3]   = color.r; col[i*3+1] = color.g; col[i*3+2] = color.b;
+    };
+
+    const dirTmp = new THREE.Vector3();
+    const colorTmp = new THREE.Color();
+
+    if (this.shape === 'sphere'){
+      for (let i=0;i<n;i++){
+        const u = Math.random(), v = Math.random();
+        const theta = 2*Math.PI*u, phi = Math.acos(2*v-1);
+        dirTmp.set(Math.sin(phi)*Math.cos(theta), Math.cos(phi), Math.sin(phi)*Math.sin(theta));
+        const sp = speedBase * (0.6 + Math.random()*0.7);
+        colorTmp.copy(useRandom ? randomHueColor(1.0, 0.62) : base);
+        setParticle(i, dirTmp, sp, colorTmp);
+      }
+    } else if (this.shape === 'ring'){
+      for (let i=0;i<n;i++){
+        const a = Math.random()*Math.PI*2;
+        const yJ = THREE.MathUtils.randFloatSpread(0.04);
+        dirTmp.set(Math.cos(a), yJ, Math.sin(a)).normalize();
+        const sp = speedBase * (0.75 + Math.random()*0.2);
+        colorTmp.copy(useRandom ? randomHueColor(1.0, 0.62) : base);
+        setParticle(i, dirTmp, sp, colorTmp);
+      }
+    } else if (this.shape === 'star5'){
+      const outer = 1.0, inner = 0.42;
+      const verts = [];
+      for (let k=0;k<10;k++){
+        const ang = Math.PI/5 * k - Math.PI/2;
+        const r = (k%2===0) ? outer : inner;
+        verts.push(new THREE.Vector2(Math.cos(ang)*r, Math.sin(ang)*r));
+      }
+      for (let i=0;i<n;i++){
+        const k = Math.floor(Math.random()*10);
+        const a = verts[k], b = verts[(k+1)%10];
+        const t = Math.random();
+        const px = a.x*(1-t)+b.x*t;
+        const pz = a.y*(1-t)+b.y*t;
+        dirTmp.set(px, THREE.MathUtils.randFloatSpread(0.03), pz).normalize();
+        const sp = speedBase * (0.8 + Math.random()*0.25);
+        colorTmp.copy(useRandom ? randomHueColor(1.0, 0.6) : base);
+        setParticle(i, dirTmp, sp, colorTmp);
+      }
+    }
+
+    geo.setAttribute('position', new THREE.BufferAttribute(pos,3));
+    geo.setAttribute('velocity', new THREE.BufferAttribute(vel,3));
+    geo.setAttribute('color', new THREE.BufferAttribute(col,3));
+
+    this.pointsMat = new THREE.PointsMaterial({
+      size: params.particleSize,
+      sizeAttenuation: true,
+      map: sparkTex, alphaMap: sparkTex,
+      transparent: true, depthWrite: false,
+      blending: THREE.AdditiveBlending, vertexColors: true
+    });
+    this.points = new THREE.Points(geo, this.pointsMat);
+    this.center = center.clone();
+    this.age = 0;
+    this.duration = 2.6 + Math.random()*1.1;
+    scene.add(this.points);
+
+    // 拖尾累積器（爆炸）
+    this._trailShardAcc = 0;
+
+    playExplosionSound(center);
+  }
+
+  update(dt){
+    if (!this.exploded){
+      // 上升
+      this.vel.y -= params.gravity * dt * 0.8;
+      this.vel.x += params.wind * 0.15 * dt;
+      this.rocket.position.addScaledVector(this.vel, dt);
+
+      // Rocket 粒子拖尾
+      if (params.tailMode !== 'off'){
+        this._trailAcc += params.trailEmitRocket * dt;
+        const warm = new THREE.Color(1.0, 0.9, 0.75);
+        const mixed = warm.lerp(new THREE.Color(params.color), 0.35);
+        while (this._trailAcc >= 1){
+          trailSystem.spawn(
+            this.rocket.position,
+            mixed,
+            params.trailLife * (0.9 + Math.random()*0.2),
+            { x: THREE.MathUtils.randFloatSpread(2.5), y: -THREE.MathUtils.randFloat(4,8), z: THREE.MathUtils.randFloatSpread(2.5) }
+          );
+          this._trailAcc -= 1;
+        }
+      }
+
+      if (this.rocket.position.y >= this.maxAlt || this.vel.y < 0){
+        this.explode();
+      }
+    } else {
+      // 爆炸後的碎星
+      this.age += dt;
+      const geo = this.points.geometry;
+      const pos = geo.attributes.position.array;
+      const vel = geo.attributes.velocity.array;
+
+      // Fragments 運動
+      for (let i=0;i<vel.length;i+=3){
+        vel[i]   += params.wind * dt;       // 風
+        vel[i+1] -= params.gravity * dt;    // 重力
+        pos[i]   += vel[i] * dt;
+        pos[i+1] += vel[i+1] * dt;
+        pos[i+2] += vel[i+2] * dt;
+      }
+      geo.attributes.position.needsUpdate = true;
+
+      // 碎星拖尾：隨機挑一些碎星位置灑尾巴
+      if (params.tailMode !== 'off'){
+        this._trailShardAcc += params.trailEmitShard * dt;
+        const cols = geo.attributes.color.array;
+        while (this._trailShardAcc >= 1){
+          const idx = Math.floor(Math.random() * (pos.length/3));
+          const c = new THREE.Color(cols[idx*3], cols[idx*3+1], cols[idx*3+2]);
+          trailSystem.spawn(
+            new THREE.Vector3(pos[idx*3], pos[idx*3+1], pos[idx*3+2]),
+            c,
+            params.trailLife * 0.6 * (0.9 + Math.random()*0.2),
+            { x: THREE.MathUtils.randFloatSpread(1.5), y: -THREE.MathUtils.randFloat(2,6), z: THREE.MathUtils.randFloatSpread(1.5) }
+          );
+          this._trailShardAcc -= 1;
+        }
+      }
+
+      // 漸隱 + 近距像素上限
+      const t = this.age / this.duration;
+      const fade = Math.max(0, 1 - t*t);
+      this.pointsMat.opacity = 0.98 * fade;
+
+      const d = camera.position.distanceTo(this.center);
+      if (d < 180){ this.pointsMat.sizeAttenuation = false; this.pointsMat.size = params.maxScreenSize; }
+      else { this.pointsMat.sizeAttenuation = true; this.pointsMat.size = params.particleSize; }
+
+      if (this.age >= this.duration){
+        scene.remove(this.points);
+        this.dead = true;
+        this.dispose();
+      }
+    }
+  }
+
+  dispose(){
+    if (this.rocket) this.rocket.geometry.dispose();
+    if (this.points){
+      this.points.geometry.dispose();
+      this.pointsMat.dispose();
+    }
+  }
+}
+
+/* ---------- 發射 helper ---------- */
+function triggerLaunch(count=1){
+  for(let i=0;i<count;i++) fireworks.push(new Firework());
+  if (!audioEnabled){ audioContext.resume().then(()=>{ audioEnabled = true; }); }
+}
+
+/* ---------- 動畫迴圈 ---------- */
+let last = performance.now(), frame = 0;
+const fullViewport = new THREE.Vector4(0,0,innerWidth,innerHeight);
+
+function animate(now){
+  requestAnimationFrame(animate);
+  const dt = Math.min(0.033, (now - last)/1000); last = now; frame++;
+
+  // 星星閃爍
+  const tw = Math.sin(now*0.001 + (stars.userData.twinklePhase||0))*0.08 + 0.92;
+  stars.material.opacity = tw * params.starGlow;
+
+  // 海水：沿 +z（由內向外）推進
+  const arr = seaGeo.attributes.position.array;
+  const t = now * 0.0011;
+  const amp = 2.0 * params.waves;
+  const k = 0.0105;           // 沿 z 的波數（波峰平行海岸線）
+  const kx = 0.007;           // 橫向微小亂流
+  for (let i=0;i<arr.length;i+=3){
+    const x = seaBase[i], z = seaBase[i+2];
+    const main = Math.sin(k*z - t*2.2) + 0.5*Math.sin(2*k*z - t*3.2 + 0.6);
+    const chop = 0.25*Math.sin(kx*x + t*1.1);
+    arr[i+1] = amp * (main + chop);
+  }
+  seaGeo.attributes.position.needsUpdate = true;
+  if (frame % 3 === 0) seaGeo.computeVertexNormals();
+
+  // 浮台跟著波起伏（近似）
+  const px = launchMarker.position.x, pz = launchMarker.position.z - 700;
+  const h = amp * (Math.sin(k*pz + -t*2.2) + 0.5*Math.sin(2*k*pz - t*3.2 + 0.6) + 0.25*Math.sin(kx*px + t*1.1));
+  launchMarker.position.y = 6 + h*0.6;
+
+  // 產生新煙火
+  spawnAccumulator += params.spawnRate * dt;
+  while (spawnAccumulator >= 1){ fireworks.push(new Firework()); spawnAccumulator -= 1; }
+
+  // 更新煙火
+  for (let i=fireworks.length-1;i>=0;i--){
+    const f = fireworks[i]; f.update(dt);
+    if (f.dead) fireworks.splice(i,1);
+  }
+
+  // 更新拖尾系統
+  trailSystem.setSize(params.trailSize);
+  trailSystem.update(dt, params.gravity, params.wind);
+
+  // 更新小地圖箭頭
+  const fwd = new THREE.Vector3(); camera.getWorldDirection(fwd);
+  const flat = new THREE.Vector3(fwd.x, 0, fwd.z); if (flat.lengthSq()<1e-6) flat.set(1,0,0);
+  camMarker.position.set(camera.position.x, 2, camera.position.z);
+  camMarker.setDirection(flat.normalize());
+
+  // 主畫面（後處理）
+  renderer.setScissorTest(false);
+  renderer.setViewport(0, 0, innerWidth, innerHeight);
+  composer.render();
+
+  // 小地圖（右下角）
+  if (params.showMinimap){
+    const miniSize = Math.floor(Math.min(innerWidth, innerHeight) * 0.22);
+    const pad = 12;
+    fullViewport.set(0,0,innerWidth,innerHeight);
+    renderer.setScissorTest(true);
+    renderer.setScissor(innerWidth - miniSize - pad, pad, miniSize, miniSize);
+    renderer.setViewport(innerWidth - miniSize - pad, pad, miniSize, miniSize);
+    renderer.setClearColor(0x0b1324, 1);
+    renderer.clear(true, true, true);
+    renderer.clearDepth();
+    renderer.render(scene, miniCam);
+    renderer.setScissorTest(false);
+    renderer.setViewport(fullViewport);
+  }
+
+  controls.update();
+}
+requestAnimationFrame(animate);
+
+/* ---------- 互動 ---------- */
+addEventListener('resize', ()=>{
+  camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+  composer.setPixelRatio(DPR); composer.setSize(innerWidth, innerHeight);
+  bloomPass.setSize(innerWidth, innerHeight);
+  renderer.setViewport(0,0,innerWidth,innerHeight);
+});
+
+addEventListener('pointerdown', (e)=>{
+  if (e.target !== renderer.domElement) return;
+  triggerLaunch();
+});
+
+document.getElementById('launchBtn').addEventListener('click', (e)=>{
+  e.stopPropagation(); triggerLaunch();
+});
+
+addEventListener('keydown', (e)=>{
+  const k = e.key.toLowerCase();
+  if (k==='h'){ gui._hidden ? gui.show() : gui.hide(); }
+  if (k==='m'){ params.showMinimap = !params.showMinimap; }
+  if (k==='r'){ camera.position.copy(defaultCamPos); controls.target.copy(defaultCamTarget); controls.update(); }
+  if (k===' ' || k==='enter'){ e.preventDefault(); triggerLaunch(); }
+});
+
+/* ---------- 初值同步 ---------- */
+bloomPass.strength = params.bloomStrength;
+bloomPass.radius   = params.bloomRadius;
+bloomPass.threshold= params.bloomThreshold;
+updateTailMode();
+
+</script>
+</body>
+</html>

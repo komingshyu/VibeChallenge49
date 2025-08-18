@@ -1,0 +1,111 @@
+[
+  {
+    "name": "銀河系（Milky Way）—示意",
+    "type": "galaxy_spiral",
+    "summary": "棒旋星系的示意模型：以數千粒子構成的螺旋臂與厚度，僅為視覺說明用途。",
+    "facts": [
+      "直徑 > 10 萬光年的龐大星盤；太陽位於獵戶臂附近。",
+      "中央存在超大質量黑洞人馬座 A*（此處未真實渲染）。"
+    ],
+    "nasaSearch": "Milky Way center Hubble mosaic",
+    "params": {
+      "arms": 2
+    }
+  },
+  {
+    "name": "仙女座星系（M31）—示意",
+    "type": "galaxy_spiral",
+    "summary": "鄰近的大型螺旋星系示意，將在數十億年後與銀河系合併。",
+    "facts": [
+      "距離約 250 萬光年，哈伯有超高解析拼接圖。"
+    ],
+    "nasaSearch": "Andromeda Galaxy Hubble mosaic M31",
+    "params": {
+      "arms": 2
+    }
+  },
+  {
+    "name": "室女座 A（M87）—示意",
+    "type": "galaxy_elliptical",
+    "summary": "室女座星系團成員，巨型橢圓星系。此處以星雲狀星群近似。",
+    "facts": [
+      "中心黑洞 M87* 由事件視界望遠鏡成像。"
+    ],
+    "nasaSearch": "M87 galaxy Hubble jet"
+  },
+  {
+    "name": "雙星系統 — 近接雙星示意",
+    "type": "binary",
+    "summary": "兩顆恆星繞共同質心運行的系統，宇宙中相當常見。",
+    "facts": [
+      "部分雙星為食雙星，可透過亮度變化被發現。"
+    ],
+    "nasaSearch": "binary star system illustration"
+  },
+  {
+    "name": "三體系統 — 階層式軌道示意",
+    "type": "triple",
+    "summary": "兩顆恆星內層繞行，第三顆在外層較遠軌道。",
+    "facts": [
+      "三體動力學可導致軌道攝動與潮汐效應。"
+    ],
+    "nasaSearch": "triple star system illustration"
+  },
+  {
+    "name": "可能宜居的類地行星 — 概念視覺",
+    "type": "planet_habitable",
+    "summary": "以程序貼圖生成的海陸與薄大氣層；僅為概念示意，非真實行星外觀。",
+    "facts": [
+      "可居住性取決於恆星光度、軌道距離、大氣成分與磁場等。"
+    ],
+    "nasaSearch": "exoplanet habitable zone illustration"
+  },
+  {
+    "name": "黑洞 + 吸積盤 — 視覺化",
+    "type": "blackhole",
+    "summary": "簡化的暗影、光子環與吸積盤紋理；未包含廣義相對論的折射/透鏡效應。",
+    "facts": [
+      "吸積盤物質與磁場可在多波段產生輻射。"
+    ],
+    "nasaSearch": "black hole accretion disk visualization"
+  },
+  {
+    "name": "星雲 — 稀薄氣體與塵埃",
+    "type": "nebula",
+    "summary": "以加法型半透明雲團模擬星際介質散射光的觀感。",
+    "facts": [
+      "恆星形成區常見 H II 雲氣與塵埃絲狀結構。"
+    ],
+    "nasaSearch": "nebula H II region Hubble Webb"
+  },
+  {
+    "name": "彗星 — 核與尾巴",
+    "type": "comet",
+    "summary": "尾巴會指向遠離太陽的方向；離太陽越近，氣體與塵埃越活躍。",
+    "facts": [
+      "離子尾接近筆直，塵埃尾略彎。此處以粒子系統近似。"
+    ],
+    "nasaSearch": "comet Halley nucleus tail"
+  },
+  {
+    "name": "迴旋星系（M51）—示意",
+    "type": "galaxy_spiral",
+    "summary": "與伴星互動的螺旋星系示意；常見藍色年輕星團與粉紅 HII 區。",
+    "facts": [
+      "互動可觸發螺旋臂與恆星形成浪潮。"
+    ],
+    "nasaSearch": "Whirlpool Galaxy M51 Hubble",
+    "params": {
+      "arms": 2
+    }
+  },
+  {
+    "name": "禮帽星系（M104）—示意",
+    "type": "galaxy_elliptical",
+    "summary": "側視塵埃暗帶與明亮核球。此處以橢球星群近似其外觀。",
+    "facts": [
+      "距離約 2.8–3.0 千萬光年。"
+    ],
+    "nasaSearch": "Sombrero Galaxy M104 Hubble Webb"
+  }
+]

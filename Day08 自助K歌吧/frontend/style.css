@@ -1,0 +1,100 @@
+:root{
+  --bg: linear-gradient(135deg, #f9f1ff 0%, #ffecec 50%, #fff9e6 100%);
+  --card: #ffffffcc;
+  --text: #252525;
+  --muted: #666;
+  --accent: #7c3aed;
+  --accent2: #06b6d4;
+  --shadow: 0 10px 30px rgba(0,0,0,.08);
+  --radius: 18px;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial;
+  color:var(--text);
+  background: var(--bg);
+  background-attachment: fixed;
+}
+
+.app-shell{min-height:100%; display:flex; flex-direction:column;}
+.app-header{
+  padding:28px 24px 12px;
+}
+.app-header h1{
+  margin:0;
+  font-size:clamp(28px, 4vw, 40px);
+  letter-spacing:.5px;
+  background: linear-gradient(90deg, #111, #7c3aed 40%, #06b6d4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.badges{margin-top:8px; display:flex; gap:8px; flex-wrap:wrap}
+.chip{
+  padding:6px 10px; border-radius:999px; background:#fff8; backdrop-filter: blur(6px);
+  border:1px solid #fff; box-shadow: var(--shadow); font-size:12px;
+}
+
+.container{width:min(1100px, 92%); margin: 0 auto 48px; display:flex; flex-direction:column; gap:24px}
+.card{
+  background: var(--card); border:1px solid #fff;
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding:20px;
+}
+
+.uploader .dropzone{
+  border:2px dashed #999; border-radius: var(--radius);
+  min-height:120px; display:flex; align-items:center; justify-content:center; gap:16px;
+  background:#fff9; margin-top:10px; padding:14px; position: relative;
+}
+.uploader input[type=file]{
+  position:absolute; inset:0; opacity:0; cursor:pointer;
+}
+.btn{
+  background:linear-gradient(90deg, var(--accent), var(--accent2));
+  color:white; border:none; padding:10px 16px; border-radius:12px;
+  font-weight:600; cursor:pointer; box-shadow: var(--shadow);
+}
+.btn:disabled{opacity:.5; cursor:not-allowed}
+
+.progress{margin-top:12px; display:flex; gap:12px; align-items:center}
+.progress .bar{flex:1; height:8px; border-radius:999px; background:#eee; position:relative; overflow:hidden}
+.progress .bar::after{
+  content:""; position:absolute; inset:0; width:0%; background:linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius:999px; transition:width .2s ease;
+}
+.progress .label{font-size:13px; color:var(--muted)}
+.hidden{display:none}
+
+.queue{margin-top:8px; display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px}
+.queue .item{
+  background:#fff; border:1px solid #eee; border-radius:12px; padding:8px 10px; font-size:13px;
+}
+
+.players .player-grid{
+  display:grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap:14px;
+}
+.player audio{width:100%}
+.link{display:inline-block; margin-top:6px; font-size:13px; text-decoration: none; color:#0a5}
+.link:hover{filter:brightness(1.1)}
+
+.fx-grid{display:grid; grid-template-columns: repeat(auto-fit,minmax(260px,1fr)); gap:14px; margin-top:12px}
+.fx{display:flex; flex-direction:column; gap:8px}
+.fx label{display:flex; justify-content:space-between; align-items:center; gap:8px}
+.fx input[type=range]{width:52%}
+
+.karaoke .mic-row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+#viz{ width:100%; border-radius:12px; background:#fff; border:1px solid #eee; margin-top:10px }
+
+.lyrics .lrc-row{display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap}
+.lrc{flex:1; min-height:120px; max-height:240px; overflow:auto; border:1px solid #eee; background:#fff; border-radius:12px; padding:10px}
+.lrc .line{padding:4px 6px; border-radius:8px}
+.lrc .line.active{background: #7c3aed10; color:#111;}
+
+.muted{color:var(--muted); font-size:13px}
+
+.app-footer{
+  margin-top:auto; padding:16px 24px; color:#555; text-align:center;
+}

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>塔羅抽牌器 · AI 解讀</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <meta name="color-scheme" content="light">
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand">
+      <div class="sigil"></div>
+      <h1>塔羅抽牌器 · AI 解讀</h1>
+    </div>
+    <div class="brand-sub">Mystic Minimal · SVG Cards · Streaming AI</div>
+  </header>
+
+  <main class="layout">
+    <section class="panel input-panel">
+      <h2>1. 提問</h2>
+      <textarea id="question" placeholder="請用一句話描述你的問題（例如：『我該不該接受新的工作邀約？』）" maxlength="300"></textarea>
+
+      <h2>2. 選擇牌陣</h2>
+      <div id="spread-list" class="spread-list"></div>
+    </section>
+
+    <section class="panel action-panel">
+      <div class="actions">
+        <button id="btnShuffle" class="primary">洗牌並抽牌</button>
+        <button id="btnClear" class="ghost">清空</button>
+      </div>
+      <div id="board" class="board">
+        <!-- 牌面會被放到這裡 -->
+      </div>
+    </section>
+
+    <section class="panel output-panel">
+      <h2>3. AI 串流解讀</h2>
+      <div id="aiStatus" class="ai-status">尚未開始解讀</div>
+      <div id="aiOutput" class="ai-output"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div>僅供自我反思與靈感助力，非任何保證之承諾或專業建議。</div>
+    <div class="mini">© 2025 Tarot AI Reader · 以 SVG 與幾何語彙呈現輕盈神祕感。</div>
+  </footer>
+
+  <script type="module" src="./tarot-data.js"></script>
+  <script type="module" src="./svg-lib.js"></script>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

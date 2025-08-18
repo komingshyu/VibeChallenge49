@@ -1,0 +1,54 @@
+/* 暗色極簡 UI，搭配沉浸式 3D 場景 */
+:root{
+  --bg:#05050a;
+  --fg:#e7ecfa;
+  --muted:#9aa4bd;
+  --accent:#7ae1ff;
+  --panel:#0d1020cc;
+  --btn:#12162a;
+  --btn-hover:#1b2140;
+  --glow:0 0 24px rgba(122,225,255,.35);
+}
+
+html,body{ margin:0; padding:0; height:100%; width:100%; background:var(--bg); color:var(--fg); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, 'Noto Sans TC', 'PingFang TC', 'Heiti TC', 'Microsoft JhengHei', sans-serif; }
+
+#scene{ position:fixed; inset:0; display:block; }
+
+.hud{
+  position:fixed; left:12px; top:12px; right:12px;
+  display:flex; align-items:center; justify-content:space-between; gap:12px; pointer-events:none;
+}
+.brand{ pointer-events:auto; font-weight:700; letter-spacing:.5px; color:var(--accent); text-shadow:var(--glow); }
+.brand .seed{ font-weight:500; color:var(--muted); margin-left:.5em; }
+.controls{ display:flex; gap:8px; pointer-events:auto; flex-wrap:wrap; justify-content:flex-end; }
+button{
+  background:var(--btn); color:var(--fg); border:1px solid #1e2547; padding:8px 12px; border-radius:8px; cursor:pointer;
+  transition:.2s background, .2s transform;
+}
+button:hover{ background:var(--btn-hover); transform:translateY(-1px); }
+label.edu{ display:flex; align-items:center; gap:6px; font-size:.95rem; color:var(--muted); }
+
+.panel{
+  position:fixed; right:16px; bottom:16px; width:min(520px, 92vw); background:var(--panel); border:1px solid #1e2547; border-radius:12px; backdrop-filter: blur(10px);
+  box-shadow: 0 6px 28px rgba(0,0,0,.5); color:var(--fg);
+}
+.panel.hidden{ display:none; }
+.panel-header{ display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid #1e2547; }
+.panel-header h2{ margin:0; font-size:1.2rem; }
+.panel-header button{ border-radius:999px; padding:6px 10px; }
+.panel-body{ padding:12px 16px; }
+.panel-body p{ margin-top:0; color:#d2d9f8; }
+.panel-body ul{ margin:0 0 12px 18px; color:#c2c9e8; }
+.panel .media{ display:flex; justify-content:center; }
+.panel .media img{ max-width:100%; border-radius:10px; border:1px solid #1e2547; box-shadow: var(--glow); }
+.panel .links{ display:flex; gap:12px; flex-wrap:wrap; margin-top:10px; }
+.panel-footer{ padding:10px 16px; color:var(--muted); border-top:1px solid #1e2547; }
+
+.helper{
+  position:fixed; left:12px; bottom:12px; color:var(--muted); background:#0b0f22aa; padding:8px 10px; border:1px solid #1e2547; border-radius:8px;
+}
+
+@media (max-width: 560px){
+  .controls{ justify-content:flex-start; }
+  .panel{ left:16px; width:auto; }
+}
