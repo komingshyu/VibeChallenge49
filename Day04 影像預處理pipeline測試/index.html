@@ -1,0 +1,751 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>影像預處理效果比較器 · 單一靜態網頁</title>
+  <!-- Tailwind：開發可用 CDN；若上線請改 CLI/PostCSS 編譯 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- OpenCV / onnxruntime-web -->
+  <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+  <style>
+    #resultsGrid canvas { transition: transform .16s ease; image-rendering: auto; }
+    .bg-pattern {
+      background-image:
+        radial-gradient(circle at 18% 18%, rgba(14,165,233,.10) 0, transparent 45%),
+        radial-gradient(circle at 80% 26%, rgba(217,70,239,.10) 0, transparent 45%),
+        radial-gradient(circle at 50% 82%, rgba(245,158,11,.10) 0, transparent 45%);
+      background-repeat: no-repeat; background-size: 60% 60%, 70% 70%, 50% 50%;
+    }
+    .corner-accent::after { content:""; position:absolute; inset:0 0 auto auto; width:0; height:0;
+      border-top:14px solid transparent; border-right:14px solid transparent; }
+    .corner-sky::after{ border-right-color:rgb(14 165 233); }
+    .corner-fuchsia::after{ border-right-color:rgb(217 70 239); }
+    .corner-amber::after{ border-right-color:rgb(245 158 11); }
+    .spinner { width:16px; height:16px; border:2px solid rgba(0,0,0,.15); border-top-color:#0284c7; border-radius:50%; animation:sp .8s linear infinite; }
+    @keyframes sp { to { transform:rotate(360deg); } }
+    .pin { position:absolute; width:10px; height:10px; border:2px solid #f59e0b; border-radius:50%; background:#fff; transform:translate(-50%,-50%); box-shadow:0 0 0 2px rgba(245,158,11,.25); }
+    .pin-text { position:absolute; transform: translate(-50%, -130%); font-size:11px; background:#fff; padding:1px 4px; border-radius:4px; border:1px solid #f59e0b55; color:#92400e; }
+  </style>
+</head>
+<body class="min-h-screen bg-neutral-50 text-neutral-900 relative bg-pattern">
+  <!-- 全域執行橫幅 -->
+  <div id="runBanner" class="hidden fixed top-3 left-1/2 -translate-x-1/2 z-50 px-3 py-1.5 rounded-xl bg-white/90 backdrop-blur border border-sky-300 shadow flex items-center gap-2 text-sm text-sky-700">
+    <div class="spinner"></div><div id="runBannerText">執行中…</div>
+  </div>
+  <!-- Toast -->
+  <div id="toast" class="hidden fixed bottom-4 right-4 z-50 px-3 py-2 rounded-xl bg-white border shadow text-sm"></div>
+
+  <div class="mx-auto max-w-7xl p-4">
+    <header class="mb-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="h-8 w-1 rounded-full bg-gradient-to-b from-sky-400 to-fuchsia-500 shadow"></div>
+          <h1 class="text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-sky-600 via-fuchsia-600 to-amber-600">
+            影像預處理效果比較器 · 單一靜態網頁
+          </h1>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-sky-200 rounded-xl px-3 py-1.5 shadow">
+            <label for="previewScale" class="text-sm font-medium text-sky-700">預覽縮放</label>
+            <input id="previewScale" type="range" min="25" max="200" value="100" class="w-32 accent-fuchsia-500">
+            <span id="scaleLabel" class="text-sm tabular-nums text-fuchsia-600 font-semibold">100%</span>
+          </div>
+          <button id="btnAddPipeline" class="px-3 py-1.5 rounded-xl text-sm font-medium border border-amber-300 shadow-sm bg-amber-50 hover:bg-amber-100 text-amber-700">
+            新增 Pipeline
+          </button>
+          <button id="btnRunAll" class="px-3 py-1.5 rounded-xl text-sm font-medium border border-sky-300 shadow-sm bg-sky-50 text-sky-700 disabled:opacity-50" disabled>
+            執行全部
+          </button>
+        </div>
+      </div>
+      <div class="mt-3 h-px bg-gradient-to-r from-transparent via-amber-400/70 to-transparent"></div>
+    </header>
+
+    <!-- 上方：圖片與狀態 -->
+    <div class="grid md:grid-cols-3 gap-4 mb-6">
+      <div class="relative p-4 bg-white rounded-2xl shadow-sm border corner-accent corner-sky">
+        <div class="text-sm font-semibold mb-2">上傳圖片</div>
+        <input id="fileImage" type="file" accept="image/*" class="block w-full text-sm"/>
+        <div class="mt-3 text-xs text-gray-600">建議寬邊 ≤ 3000px 以免過慢。</div>
+      </div>
+      <div class="relative p-4 bg-white rounded-2xl shadow-sm border corner-accent corner-fuchsia">
+        <div class="text-sm font-semibold mb-2">OpenCV / ONNX 狀態</div>
+        <div id="cvStatus" class="text-sm">⌛ OpenCV 載入中…</div>
+        <div id="ortStatus" class="text-sm">✅ onnxruntime-web 已載入</div>
+        <div class="mt-3 text-xs text-gray-600">固定模型：models/model_rmbg.onnx、models/realesrgan-x4plus.onnx</div>
+      </div>
+      <div class="relative p-4 bg-white rounded-2xl shadow-sm border corner-accent corner-amber">
+        <div class="text-sm font-semibold mb-2">快速流程</div>
+        <button id="btnQuickDocFix" class="px-3 py-1.5 rounded-lg text-sm border bg-neutral-50 hover:bg-neutral-100">去背 → 梯形校正（去背）</button>
+        <button id="btnQuickSR" class="px-3 py-1.5 rounded-lg text-sm border bg-neutral-50 hover:bg-neutral-100 ml-2">超解析度 x4</button>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-4">
+      <!-- 左：Pipelines 與節點工具箱 -->
+      <aside class="md:col-span-1 bg-white rounded-2xl shadow-sm border p-3">
+        <div class="text-sm font-semibold mb-2">Pipelines</div>
+        <div id="pipelines" class="space-y-2"></div>
+
+        <div class="mt-4">
+          <div class="text-sm font-semibold mb-2">新增節點</div>
+          <div class="grid grid-cols-2 gap-2 text-xs" id="toolbox"></div>
+        </div>
+      </aside>
+
+      <!-- 右：編輯器 + 預覽 -->
+      <main class="md:col-span-2 space-y-4">
+        <div class="bg-white rounded-2xl shadow-sm border p-3">
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-sm font-semibold">當前編輯：<span id="activePipelineName">（未選擇）</span></div>
+            <div class="flex items-center gap-2">
+              <button id="btnPickQuad" class="px-3 py-1.5 rounded-lg text-sm border bg-amber-50 text-amber-700 hover:bg-amber-100">手動標註四點</button>
+            </div>
+          </div>
+          <div id="nodesPanel" class="space-y-3 text-sm text-gray-700">請於左側選擇一條 Pipeline 以編輯。</div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border p-3">
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-sm font-semibold">原圖 & 輸出對比</div>
+            <div class="flex items-center gap-2">
+              <button id="btnRunAll2" class="px-3 py-1.5 rounded-xl text-sm font-medium border border-sky-300 shadow-sm bg-sky-50 text-sky-700 disabled:opacity-50" disabled>執行全部</button>
+            </div>
+          </div>
+          <div class="grid md:grid-cols-3 gap-4" id="resultsGrid">
+            <div class="border rounded-xl p-2 bg-white/60 relative">
+              <div class="text-xs text-gray-500 mb-1">原圖</div>
+              <div class="relative">
+                <img id="inputImg" class="w-full h-auto rounded-lg hidden" alt="input"/>
+                <!-- 手動四點標註層（疊在原圖上） -->
+                <div id="pickLayer" class="hidden absolute inset-0 pointer-events-none"></div>
+              </div>
+              <div id="noImage" class="text-sm text-gray-500">尚未上傳圖片</div>
+              <div id="pickHint" class="hidden mt-2 text-xs text-amber-700">依序點：左上→右上→右下→左下（ESC 取消、Backspace 撤銷）</div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <footer class="text-xs text-gray-500 mt-6">
+      小叮嚀：去背模型預設輸入 1024×1024、[-1,1] 正規化；若邊緣被吃掉，降低 threshold 或增加形態學修補次數。
+    </footer>
+  </div>
+
+  <script>
+    // ========= 工具 =========
+    const $ = (sel, el=document) => el.querySelector(sel);
+    const $$ = (sel, el=document) => Array.from(el.querySelectorAll(sel));
+    const uid = (p="id") => `${p}_${Math.random().toString(36).slice(2,9)}`;
+    const get2d = (c, opt=true) => c.getContext('2d', opt ? { willReadFrequently:true } : undefined);
+    const now = () => performance.now();
+
+    let cvReady=false, cvObj=null; const cvStatusEl = document.getElementById('cvStatus');
+    function toast(msg, kind='info'){
+      const t = $('#toast'); t.textContent = msg;
+      t.className = `fixed bottom-4 right-4 z-50 px-3 py-2 rounded-xl border shadow text-sm ${
+        kind==='error' ? 'bg-red-50 border-red-300 text-red-700' :
+        kind==='ok'    ? 'bg-emerald-50 border-emerald-300 text-emerald-700' :
+                         'bg-white border-sky-200 text-sky-800'
+      }`;
+      t.classList.remove('hidden'); setTimeout(()=>t.classList.add('hidden'), 1800);
+    }
+    function setRunning(on, text='執行中…'){
+      const b = $('#runBanner'); $('#runBannerText').textContent = text; b.classList.toggle('hidden', !on);
+      $('#btnRunAll').disabled = on; $('#btnRunAll2').disabled = on;
+    }
+
+    // 等 OpenCV 可用
+    (function waitCV(){
+      if (window.cv && window.cv.Mat) { cvReady = true; cvObj = window.cv; cvStatusEl.textContent = '✅ OpenCV.js 已載入'; enableRunButtons(); }
+      else setTimeout(waitCV, 120);
+    })();
+
+    // ========= 狀態 =========
+    const pipelines = [ { id: uid('pl'), name: 'Pipeline A', nodes: [] }, { id: uid('pl'), name: 'Pipeline B', nodes: [] } ];
+    let activePipelineId = pipelines[0].id;
+
+    // 內建模型 sessions
+    const sessions = {};
+    async function getSession(url){
+      if (sessions[url]) return sessions[url];
+      const buf = await (await fetch(url)).arrayBuffer();
+      const sess = await ort.InferenceSession.create(buf, { executionProviders: ['wasm'] });
+      sessions[url] = sess; return sess;
+    }
+
+    // ========= DOM =========
+    const inputImg = $('#inputImg'), noImage = $('#noImage'), fileImage = $('#fileImage');
+    const pickLayer = $('#pickLayer'), pickHint = $('#pickHint');
+    const pipelinesEl = $('#pipelines'), toolboxEl = $('#toolbox'), nodesPanel = $('#nodesPanel'), activePipelineName = $('#activePipelineName'), resultsGrid = $('#resultsGrid');
+    const btnRunAll = $('#btnRunAll'), btnRunAll2 = $('#btnRunAll2'), btnAddPipeline = $('#btnAddPipeline'), btnQuickDocFix = $('#btnQuickDocFix'), btnQuickSR = $('#btnQuickSR'), btnPickQuad = $('#btnPickQuad');
+
+    function enableRunButtons(){ const enabled = (cvReady && !!inputImg.src); btnRunAll.disabled = !enabled; btnRunAll2.disabled = !enabled; }
+
+    // 上傳圖片
+    fileImage.addEventListener('change', (e) => {
+      const f = e.target.files?.[0]; if (!f) return;
+      const url = URL.createObjectURL(f);
+      inputImg.src = url; inputImg.classList.remove('hidden'); noImage.classList.add('hidden');
+      enableRunButtons(); renderResultsGrid();
+    });
+
+    // 預覽縮放
+    const scaleInput = $('#previewScale'), scaleLabel = $('#scaleLabel');
+    scaleInput.addEventListener('input', () => {
+      scaleLabel.textContent = scaleInput.value + '%';
+      const scale = scaleInput.value / 100;
+      document.querySelectorAll('#resultsGrid canvas').forEach(cv => {
+        cv.style.transformOrigin = 'top left';
+        cv.style.transform = `scale(${scale})`;
+      });
+    });
+
+    // ========= 節點型別與參數說明（值域 + 調整方向） =========
+    const SCHEMA = {
+      brightnessContrastSaturation: {
+        name:'亮度/對比/飽和',
+        params:{
+          auto: {type:'checkbox', label:'自動估計', hint:'啟用後將自動推算亮度/對比/飽和；執行時會回報最終值'},
+          brightness:{type:'range', min:-150, max:150, step:1, label:'亮度', hint:'值域 -150~150；↑ 更亮，↓ 更暗'},
+          contrast:{type:'range', min:0.1, max:3.0, step:0.05, label:'對比', hint:'值域 0.1~3.0；↑ 對比更強，↓ 更平'},
+          saturation:{type:'range', min:0, max:3.0, step:0.05, label:'飽和', hint:'值域 0~3.0；↑ 顏色更鮮豔，↓ 更灰'}
+        }
+      },
+      denoise:{
+        name:'去噪',
+        params:{
+          h:{type:'range', min:0, max:30, step:1, label:'強度', hint:'值域 0~30；↑ 去噪更強但可能變糊'},
+          templateWindowSize:{type:'range', min:3, max:15, step:2, label:'樣板窗', hint:'值域 3~15（奇數）；↑ 保留紋理但較慢'},
+          searchWindowSize:{type:'range', min:7, max:35, step:2, label:'搜尋窗', hint:'值域 7~35（奇數）；↑ 更穩定但較慢'}
+        }
+      },
+      sharpen:{ name:'銳化', params:{ amount:{type:'range', min:0, max:5, step:0.1, label:'強度', hint:'值域 0~5；↑ 邊緣更銳利，過高會產生光暈'} } },
+      clahe:{
+        name:'CLAHE',
+        params:{
+          clipLimit:{type:'range', min:1, max:8, step:0.1, label:'Clip Limit', hint:'值域 1~8；↑ 對比提升更強，過高會雜訊化'},
+          tileGridSize:{type:'range', min:4, max:32, step:2, label:'Tile Grid', hint:'值域 4~32；↑ 更在地化的對比提升，較慢'}
+        }
+      },
+      binarize:{
+        name:'二值化',
+        params:{
+          auto:{type:'checkbox', label:'Otsu 自動', hint:'自動計算門檻；執行時會回報使用的門檻'},
+          thresh:{type:'range', min:0, max:255, step:1, label:'門檻', hint:'值域 0~255；↑ 更容易變白（前景）'},
+          maxVal:{type:'range', min:1, max:255, step:1, label:'MaxVal', hint:'輸出白色上限（通常 255）'},
+          invert:{type:'checkbox', label:'反轉', hint:'把前景/背景翻轉'}
+        }
+      },
+      adaptiveBinarize:{
+        name:'自適應二值化',
+        params:{
+          maxVal:{type:'range', min:1, max:255, step:1, label:'MaxVal', hint:'輸出白色上限（通常 255）'},
+          blockSize:{type:'range', min:3, max:75, step:2, label:'區塊大小', hint:'值域 3~75（奇數）；↑ 更在地的門檻'},
+          C:{type:'range', min:-20, max:20, step:1, label:'偏移 C', hint:'值域 -20~20；↑ 更容易變黑（減門檻）'},
+          gaussian:{type:'checkbox', label:'Gaussian', hint:'使用高斯權重'},
+          invert:{type:'checkbox', label:'反轉', hint:'把前景/背景翻轉'}
+        }
+      },
+      canny:{
+        name:'Canny 邊緣', params:{
+          low:{type:'range', min:0, max:255, step:1, label:'低閾', hint:'值域 0~255；↑ 檢出更少邊'},
+          high:{type:'range', min:0, max:255, step:1, label:'高閾', hint:'值域 0~255；↑ 只保留更強的邊'}
+        }
+      },
+      houghCircles:{
+        name:'圓形偵測', params:{
+          dp:{type:'range', min:1, max:3, step:0.1, label:'dp', hint:'累加器解析度縮放；↑ 更快但較粗'},
+          minDist:{type:'range', min:5, max:200, step:1, label:'minDist', hint:'兩圓心最小距離；↑ 避免重複偵測'},
+          cannyHigh:{type:'range', min:50, max:300, step:1, label:'Canny 高閾', hint:'↑ 更嚴格邊緣'},
+          votes:{type:'range', min:10, max:100, step:1, label:'投票閾', hint:'↑ 只留明顯圓'},
+          minRadius:{type:'range', min:0, max:200, step:1, label:'最小半徑', hint:'限制半徑範圍'},
+          maxRadius:{type:'range', min:0, max:400, step:1, label:'最大半徑', hint:'0 表不限'}
+        }
+      },
+      findContours:{ name:'輪廓偵測', params:{ mode:{type:'select', options:[['external','External'],['all','All(Tree)']], label:'模式', hint:'External 只取外層；All 包含階層'} } },
+      detectQuadAndWarp:{ name:'梯形校正（輪廓）', params:{ margin:{type:'range', min:0, max:50, step:1, label:'邊界留白', hint:'↑ 讓輸出四周多留空'} } },
+      rmbgQuadWarp:{ name:'梯形校正（去背）', params:{
+        modelUrl:{type:'text', label:'模型路徑', hint:'固定：models/model_rmbg.onnx', readonly:true, def:'models/model_rmbg.onnx'},
+        inputSize:{type:'range', min:256, max:1024, step:64, label:'模型輸入', hint:'建議 1024；↓ 速度快解析差'},
+        threshold:{type:'range', min:0.1, max:0.9, step:0.01, label:'遮罩閾值', hint:'值域 0.1~0.9；↓ 保留更多前景'},
+        closeIters:{type:'range', min:0, max:3, step:1, label:'閉運算次數', hint:'↑ 補洞、連接裂縫'},
+        dilateIters:{type:'range', min:0, max:3, step:1, label:'膨脹次數', hint:'↑ 邊緣增厚防止吃字'},
+        margin:{type:'range', min:0, max:50, step:1, label:'邊界留白', hint:'↑ 讓輸出四周多留空'}
+      }},
+      perspectiveTransform:{ name:'透視校正(自定四點)', params:{} },
+      affineTransform:{ name:'仿射校正(自定三點)', params:{} },
+      onnxSuperResolution:{ name:'ONNX 超解析度', params:{ modelUrl:{type:'text', label:'模型路徑', hint:'固定：models/realesrgan-x4plus.onnx', readonly:true, def:'models/realesrgan-x4plus.onnx'} } },
+      onnxBackgroundRemoval:{ name:'ONNX 去背', params:{
+        modelUrl:{type:'text', label:'模型路徑', hint:'固定：models/model_rmbg.onnx', readonly:true, def:'models/model_rmbg.onnx'},
+        inputSize:{type:'range', min:256, max:1024, step:64, label:'模型輸入', hint:'建議 1024；↓ 速度快解析差'},
+        threshold:{type:'range', min:0.1, max:0.9, step:0.01, label:'遮罩閾值', hint:'值域 0.1~0.9；↓ 保留更多前景'},
+        closeIters:{type:'range', min:0, max:3, step:1, label:'閉運算次數', hint:'↑ 補洞、連接裂縫'},
+        dilateIters:{type:'range', min:0, max:3, step:1, label:'膨脹次數', hint:'↑ 邊緣增厚、防止吃字'}
+      } },
+    };
+
+    // 預設節點
+    function defaultNode(kind){
+      switch(kind){
+        case 'brightnessContrastSaturation': return { id:uid('n'), kind, name:SCHEMA[kind].name, params:{ auto:true, brightness:0, contrast:1.0, saturation:1.0 } };
+        case 'denoise': return { id:uid('n'), kind, name:SCHEMA[kind].name, params:{ h:10, templateWindowSize:7, searchWindowSize:21 } };
+        case 'sharpen': return { id:uid('n'), kind, name:SCHEMA[kind].name, params:{ amount:1.0 } };
+        case 'clahe': return { id:uid('n'), kind, name:SCHEMA[kind].name, params:{ clipLimit:2.0, tileGridSize:8 } };
+        case 'binarize': return { id:uid('n'), kind, name:SCHEMA[kind].name, params:{ auto:true, thresh:128, maxVal:255, invert:false } };
+        case 'adaptiveBinarize': return { id:uid('n'), kind, name:SCHEMA[kind].name, params:{ maxVal:255, blockSize:21, C:5, gaussian:true, invert:false } };
+        case 'canny': return { id:uid('n'), kind, name:SCHEMA[kind].name, params:{ low:50, high:150 } };
+        case 'houghCircles': return { id:uid('n'), kind, name:SCHEMA[kind].name, params:{ dp:1.2, minDist:20, cannyHigh:150, votes:30, minRadius:0, maxRadius:0 } };
+        case 'findContours': return { id:uid('n'), kind, name:SCHEMA[kind].name, params:{ mode:'external' } };
+        case 'detectQuadAndWarp': return { id:uid('n'), kind, name:SCHEMA[kind].name, params:{ margin:5 } };
+        case 'rmbgQuadWarp': return { id:uid('n'), kind, name:SCHEMA[kind].name, params:{ modelUrl:'models/model_rmbg.onnx', inputSize:1024, threshold:0.35, closeIters:1, dilateIters:1, margin:5 } };
+        case 'perspectiveTransform': return { id:uid('n'), kind, name:SCHEMA[kind].name, params:{ points:[[0,0],[100,0],[100,100],[0,100]], size:null } };
+        case 'affineTransform': return { id:uid('n'), kind, name:SCHEMA[kind].name, params:{ points:[[0,0],[100,0],[0,100]], size:null } };
+        case 'onnxSuperResolution': return { id:uid('n'), kind, name:SCHEMA[kind].name, params:{ modelUrl:'models/realesrgan-x4plus.onnx' } };
+        case 'onnxBackgroundRemoval': return { id:uid('n'), kind, name:SCHEMA[kind].name, params:{ modelUrl:'models/model_rmbg.onnx', inputSize:1024, threshold:0.35, closeIters:1, dilateIters:1 } };
+      }
+    }
+
+    // 工具箱
+    const NODE_TYPES = [
+      ['亮度/對比/飽和','brightnessContrastSaturation'],
+      ['去噪','denoise'],
+      ['銳化','sharpen'],
+      ['CLAHE','clahe'],
+      ['二值化','binarize'],
+      ['自適應二值化','adaptiveBinarize'],
+      ['Canny','canny'],
+      ['圓形偵測','houghCircles'],
+      ['輪廓偵測','findContours'],
+      ['梯形校正（輪廓）','detectQuadAndWarp'],
+      ['梯形校正（去背）','rmbgQuadWarp'],
+      ['透視校正','perspectiveTransform'],
+      ['仿射校正','affineTransform'],
+      ['ONNX 超解析度','onnxSuperResolution'],
+      ['ONNX 去背','onnxBackgroundRemoval'],
+    ];
+
+    function renderToolbox(){
+      toolboxEl.innerHTML=''; NODE_TYPES.forEach(([label, k])=>{
+        const btn=document.createElement('button');
+        btn.className='px-2 py-1 rounded-lg bg-neutral-100 hover:bg-neutral-200 border';
+        btn.textContent=label;
+        btn.onclick=()=>{
+          if(!activePipelineId && pipelines.length===0){ const id=uid('pl'); pipelines.push({ id, name:'Pipeline A', nodes:[] }); activePipelineId=id; }
+          if(!activePipelineId) activePipelineId = pipelines[0].id;
+          const p = pipelines.find(p=>p.id===activePipelineId); p.nodes.push(defaultNode(k));
+          renderPipelines(); renderNodesPanel();
+        };
+        toolboxEl.appendChild(btn);
+      });
+    }
+
+    function renderPipelines(){
+      pipelinesEl.innerHTML='';
+      pipelines.forEach((p)=>{
+        const wrap=document.createElement('div');
+        wrap.className='border rounded-xl p-2 bg-white/70 ' + (activePipelineId===p.id?'border-sky-400 shadow-sm':'border-gray-200');
+        wrap.onclick=()=>{ activePipelineId=p.id; renderPipelines(); renderNodesPanel(); };
+        const top=document.createElement('div'); top.className='flex items-center justify-between';
+        const nameInput=document.createElement('input'); nameInput.value=p.name; nameInput.className='text-sm font-semibold w-full mr-2';
+        nameInput.oninput=(e)=>{ p.name=e.target.value; renderResultsGrid(); if(activePipelineId===p.id) activePipelineName.textContent=p.name; };
+        const btns=document.createElement('div'); btns.className='flex items-center gap-1';
+        const bCopy=document.createElement('button'); bCopy.className='text-xs px-2 py-1 rounded bg-neutral-100 border'; bCopy.textContent='複製';
+        bCopy.onclick=(ev)=>{ ev.stopPropagation(); const copy={ id:uid('pl'), name:p.name+' Copy', nodes:p.nodes.map(n=>({ ...n, id:uid('n')})) }; pipelines.push(copy); renderPipelines(); renderResultsGrid(); };
+        const bDel=document.createElement('button'); bDel.className='text-xs px-2 py-1 rounded bg-red-50 text-red-700 border'; bDel.textContent='刪除';
+        bDel.onclick=(ev)=>{ ev.stopPropagation(); const i=pipelines.findIndex(pp=>pp.id===p.id); if(i>=0){ pipelines.splice(i,1); if(activePipelineId===p.id) activePipelineId = pipelines[0]?.id || null; renderPipelines(); renderNodesPanel(); renderResultsGrid(); } };
+        btns.append(bCopy,bDel); top.append(nameInput, btns);
+        const info=document.createElement('div'); info.className='text-xs text-gray-600 mt-1'; info.textContent='節點：'+p.nodes.length;
+        wrap.append(top, info); pipelinesEl.appendChild(wrap);
+      });
+      activePipelineName.textContent = pipelines.find(p=>p.id===activePipelineId)?.name || '（未選擇）';
+    }
+
+    function paramInput(node, key, spec){
+      const wrap=document.createElement('div');
+      const lb=document.createElement('div'); lb.className='text-xs font-medium text-gray-700'; lb.textContent=spec.label || key;
+      wrap.append(lb);
+
+      let ctrl;
+      if(spec.type==='range'){
+        ctrl=document.createElement('input'); ctrl.type='range'; ctrl.min=spec.min; ctrl.max=spec.max; ctrl.step=spec.step; ctrl.value = node.params[key] ?? spec.min;
+        ctrl.className='w-full accent-sky-500';
+        const readout=document.createElement('div'); readout.className='flex justify-between text-[11px] text-gray-500 mt-0.5';
+        const spanVal=document.createElement('span'), spanHint=document.createElement('span'); spanHint.textContent=spec.hint || ''; spanVal.textContent=String(ctrl.value);
+        readout.append(spanHint, spanVal);
+        ctrl.oninput=(e)=>{ const v=(spec.step%1? parseFloat(e.target.value):parseInt(e.target.value,10)); node.params[key]=v; spanVal.textContent=String(v); };
+        wrap.append(ctrl, readout);
+      } else if(spec.type==='checkbox'){
+        ctrl=document.createElement('input'); ctrl.type='checkbox'; ctrl.checked=!!node.params[key]; ctrl.className='align-middle mr-2';
+        const txt=document.createElement('span'); txt.className='text-[11px] text-gray-600'; txt.textContent = spec.hint || '';
+        ctrl.onchange=(e)=>{ node.params[key]=e.target.checked; };
+        wrap.append(ctrl, document.createTextNode(spec.label || key), document.createElement('br'), txt);
+      } else if(spec.type==='select'){
+        ctrl=document.createElement('select'); ctrl.className='w-full border rounded-lg px-2 py-1 text-sm';
+        ctrl.innerHTML = spec.options.map(([v,txt])=>`<option value="${v}">${txt}</option>`).join('');
+        ctrl.value=node.params[key]; ctrl.onchange=(e)=>{ node.params[key]=e.target.value; };
+        const hint=document.createElement('div'); hint.className='text-[11px] text-gray-500 mt-0.5'; hint.textContent=spec.hint || '';
+        wrap.append(ctrl, hint);
+      } else if(spec.type==='text'){
+        ctrl=document.createElement('input'); ctrl.type='text'; ctrl.value=node.params[key] ?? spec.def ?? ''; ctrl.readOnly=!!spec.readonly; ctrl.className='w-full border rounded-lg px-2 py-1 text-sm';
+        ctrl.oninput=(e)=>{ node.params[key]=e.target.value; };
+        const hint=document.createElement('div'); hint.className='text-[11px] text-gray-500 mt-0.5'; hint.textContent=spec.hint || '';
+        wrap.append(ctrl, hint);
+      }
+      return wrap;
+    }
+
+    function nodeEditor(node){
+      const schema = SCHEMA[node.kind];
+      const cont=document.createElement('div'); cont.className='border rounded-xl p-3 bg-white/70';
+      const header=document.createElement('div'); header.className='flex items-center justify-between';
+      const title=document.createElement('div'); title.className='font-medium text-sm'; title.textContent=node.name || node.kind;
+      const btns=document.createElement('div'); btns.className='flex items-center gap-2';
+      const bUp=document.createElement('button'); bUp.className='text-xs px-2 py-1 rounded bg-neutral-100 border'; bUp.textContent='上移';
+      const bDn=document.createElement('button'); bDn.className='text-xs px-2 py-1 rounded bg-neutral-100 border'; bDn.textContent='下移';
+      const bDel=document.createElement('button'); bDel.className='text-xs px-2 py-1 rounded bg-red-50 text-red-700 border'; bDel.textContent='刪除';
+      btns.append(bUp,bDn,bDel); header.append(title, btns);
+
+      const grid=document.createElement('div'); grid.className='grid md:grid-cols-2 gap-3 mt-2';
+      const form=document.createElement('div'); form.className='space-y-2';
+
+      if(schema && schema.params){
+        Object.entries(schema.params).forEach(([key, spec])=>{
+          if(node.params[key]===undefined && spec.def!==undefined) node.params[key]=spec.def;
+          form.appendChild(paramInput(node, key, spec));
+        });
+      } else {
+        form.append(document.createTextNode('此節點無可調參數。'));
+      }
+
+      const metaDiv=document.createElement('div'); metaDiv.className='text-xs text-gray-600';
+      metaDiv.innerHTML = node._lastMeta ? `<div class="font-medium text-gray-700 mb-1">上次自適應結果</div><pre class="whitespace-pre-wrap">${JSON.stringify(node._lastMeta, null, 2)}</pre>` : `<div class="text-gray-500">尚無自適應回報。</div>`;
+
+      // 排序/刪除
+      bUp.onclick=()=>{ const p = pipelines.find(pp=>pp.id===activePipelineId); const i=p.nodes.findIndex(n=>n.id===node.id); if(i>0){ const [it]=p.nodes.splice(i,1); p.nodes.splice(i-1,0,it); renderNodesPanel(); } };
+      bDn.onclick=()=>{ const p = pipelines.find(pp=>pp.id===activePipelineId); const i=p.nodes.findIndex(n=>n.id===node.id); if(i>=0 && i<p.nodes.length-1){ const [it]=p.nodes.splice(i,1); p.nodes.splice(i+1,0,it); renderNodesPanel(); } };
+      bDel.onclick=()=>{ const p = pipelines.find(pp=>pp.id===activePipelineId); const i=p.nodes.findIndex(n=>n.id===node.id); if(i>=0){ p.nodes.splice(i,1); renderNodesPanel(); renderPipelines(); } };
+
+      grid.append(form, metaDiv); cont.append(header, grid); return cont;
+    }
+
+    function renderNodesPanel(){
+      nodesPanel.innerHTML='';
+      const p = pipelines.find(p=>p.id===activePipelineId);
+      activePipelineName.textContent = p? p.name : '（未選擇）';
+      if(!p){ nodesPanel.textContent='請於左側選擇一條 Pipeline 以編輯。'; return; }
+      if(p.nodes.length===0){ nodesPanel.textContent='此 Pipeline 尚無節點，請從左側新增。'; return; }
+      p.nodes.forEach(n=> nodesPanel.appendChild(nodeEditor(n)));
+    }
+
+    renderToolbox(); renderPipelines();
+
+    // ========= 影像 I/O =========
+    function canvasFromImage(img){ const c=document.createElement('canvas'); c.width=img.naturalWidth; c.height=img.naturalHeight; get2d(c).drawImage(img,0,0); return c; }
+    function matFromCanvas(cv, canvas){ return cv.imread(canvas); }
+    function canvasFromMat(cv, mat){ const c=document.createElement('canvas'); cv.imshow(c, mat); return c; }
+
+    // 自動參數
+    function autoParamsForImage(cv, src){
+      const gray=new cv.Mat(); cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+      const mean=new cv.Mat(), stddev=new cv.Mat(); cv.meanStdDev(gray, mean, stddev);
+      const m=mean.doubleAt(0,0), s=stddev.doubleAt(0,0);
+      gray.delete(); mean.delete(); stddev.delete();
+      const autoBrightness = Math.round(128 - m);
+      const autoContrast = +(s>1 ? 55/s : 1.0).toFixed(2);
+      const tmpGray=new cv.Mat(); cv.cvtColor(src, tmpGray, cv.COLOR_RGBA2GRAY, 0);
+      const otsu = cv.threshold(tmpGray, new cv.Mat(), 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)[0];
+      tmpGray.delete();
+      return { autoBrightness, autoContrast, autoSaturation:1.0, autoThresh:Math.round(otsu) };
+    }
+
+    function toCHWFloatNormalized(canvas, mode='0to1'){
+      const W=canvas.width, H=canvas.height, data=get2d(canvas).getImageData(0,0,W,H).data, out=new Float32Array(3*H*W);
+      for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+        const i=(y*W+x)*4, o=y*W+x; let r=data[i], g=data[i+1], b=data[i+2];
+        if(mode==='-1to1'){ r=(r-127.5)/127.5; g=(g-127.5)/127.5; b=(b-127.5)/127.5; } else { r/=255; g/=255; b/=255; }
+        out[0*H*W+o]=r; out[1*H*W+o]=g; out[2*H*W+o]=b;
+      }
+      return out;
+    }
+
+    // 幾何：四點排序 + 尺寸估計（最大對邊長加權）
+    function orderQuadWeighted(pts){
+      const sum=pts.map(p=>p.x+p.y), diff=pts.map(p=>p.y-p.x);
+      const tl=pts[sum.indexOf(Math.min(...sum))], br=pts[sum.indexOf(Math.max(...sum))];
+      const tr=pts[diff.indexOf(Math.min(...diff))], bl=pts[diff.indexOf(Math.max(...diff))];
+      const d=(a,b)=>Math.hypot(a.x-b.x, a.y-b.y);
+      const wTop=d(tr,tl), wBottom=d(br,bl), hLeft=d(bl,tl), hRight=d(br,tr);
+      const W=Math.max(1, Math.round((wTop*1.2 + wBottom)/2));
+      const H=Math.max(1, Math.round((hLeft*1.2 + hRight)/2));
+      return { tl,tr,br,bl,W,H };
+    }
+
+    // ========= 節點實作（回傳 {mat, meta}：meta 用於自適應回報） =========
+    const NodeImpls = {
+      async brightnessContrastSaturation({ cv, src, params }){
+        let { brightness=0, contrast=1.0, saturation=1.0, auto=false } = params;
+        let meta=null;
+        if(auto){ const ap=autoParamsForImage(cv, src); brightness=ap.autoBrightness; contrast=ap.autoContrast; saturation=ap.autoSaturation; meta={ used:{ brightness, contrast, saturation } }; }
+        const dst=new cv.Mat(); src.convertTo(dst,-1,contrast,brightness);
+        const hsv=new cv.Mat(); cv.cvtColor(dst,hsv,cv.COLOR_RGBA2RGB); cv.cvtColor(hsv,hsv,cv.COLOR_RGB2HSV);
+        const chs=new cv.MatVector(); cv.split(hsv,chs); const H=chs.get(0), S=chs.get(1), V=chs.get(2);
+        S.convertTo(S,-1,saturation,0); cv.merge(new cv.MatVector([H,S,V]),hsv);
+        const out=new cv.Mat(); cv.cvtColor(hsv,out,cv.COLOR_HSV2RGBA);
+        dst.delete(); hsv.delete(); chs.delete(); H.delete(); S.delete(); V.delete();
+        return { mat: out, meta };
+      },
+      async denoise({ cv, src, params }){ const { h=10, templateWindowSize=7, searchWindowSize=21 } = params;
+        const rgb=new cv.Mat(); cv.cvtColor(src,rgb,cv.COLOR_RGBA2RGB);
+        const out=new cv.Mat(); cv.fastNlMeansDenoisingColored(rgb,out,h,h,templateWindowSize,searchWindowSize);
+        const rgba=new cv.Mat(); cv.cvtColor(out,rgba,cv.COLOR_RGB2RGBA); rgb.delete(); out.delete(); return { mat: rgba };
+      },
+      async sharpen({ cv, src, params }){ const { amount=1.0 } = params;
+        const k=cv.matFromArray(3,3,cv.CV_32F,[0,-amount,0,-amount,1+4*amount,-amount,0,-amount,0]);
+        const dst=new cv.Mat(); cv.filter2D(src,dst,-1,k); k.delete(); return { mat: dst };
+      },
+      async clahe({ cv, src, params }){ const { clipLimit=2.0, tileGridSize=8 }=params;
+        const lab=new cv.Mat(); cv.cvtColor(src,lab,cv.COLOR_RGBA2LAB);
+        const chs=new cv.MatVector(); cv.split(lab,chs); const L=chs.get(0);
+        const clahe=new cv.CLAHE(clipLimit,new cv.Size(tileGridSize,tileGridSize)); clahe.apply(L,L);
+        chs.set(0,L); const merged=new cv.Mat(); cv.merge(chs,merged);
+        const out=new cv.Mat(); cv.cvtColor(merged,out,cv.COLOR_LAB2RGBA);
+        lab.delete(); chs.delete(); L.delete(); clahe.delete(); merged.delete(); return { mat: out };
+      },
+      async binarize({ cv, src, params }){ let { thresh=128, maxVal=255, invert=false, auto=false }=params;
+        const gray=new cv.Mat(); cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);
+        let meta=null; if(auto){ const ap=autoParamsForImage(cv, src); thresh=ap.autoThresh; meta={ used:{ thresh } }; }
+        const out=new cv.Mat(); cv.threshold(gray,out,thresh,maxVal,invert?cv.THRESH_BINARY_INV:cv.THRESH_BINARY);
+        const rgba=new cv.Mat(); cv.cvtColor(out,rgba,cv.COLOR_GRAY2RGBA); gray.delete(); out.delete(); return { mat: rgba, meta };
+      },
+      async adaptiveBinarize({ cv, src, params }){ const { maxVal=255, blockSize=21, C=5, gaussian=true, invert=false }=params;
+        const gray=new cv.Mat(); cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);
+        const out=new cv.Mat(); const method=gaussian?cv.ADAPTIVE_THRESH_GAUSSIAN_C:cv.ADAPTIVE_THRESH_MEAN_C;
+        cv.adaptiveThreshold(gray,out,maxVal,method,invert?cv.THRESH_BINARY_INV:cv.THRESH_BINARY,Math.max(3,blockSize|1),C);
+        const rgba=new cv.Mat(); cv.cvtColor(out,rgba,cv.COLOR_GRAY2RGBA); gray.delete(); out.delete();
+        return { mat: rgba, meta:{ used:{ blockSize:Math.max(3,blockSize|1), C } } };
+      },
+      async canny({ cv, src, params }){ const { low=50, high=150 }=params;
+        const gray=new cv.Mat(); cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);
+        const edges=new cv.Mat(); cv.Canny(gray,edges,low,high);
+        const out=new cv.Mat(); cv.cvtColor(edges,out,cv.COLOR_GRAY2RGBA);
+        gray.delete(); edges.delete(); return { mat: out };
+      },
+      async houghCircles({ cv, src, params }){ const { dp=1.2, minDist=20, cannyHigh=150, votes=30, minRadius=0, maxRadius=0 }=params;
+        const gray=new cv.Mat(); cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY); cv.medianBlur(gray,gray,5);
+        const circles=new cv.Mat(); cv.HoughCircles(gray,circles,cv.HOUGH_GRADIENT,dp,minDist,cannyHigh,votes,minRadius,maxRadius);
+        const out=src.clone(); let count=0;
+        for(let i=0;i<circles.cols;i++){ const x=circles.data32F[i*3], y=circles.data32F[i*3+1], r=circles.data32F[i*3+2]; cv.circle(out,new cv.Point(x,y),r,new cv.Scalar(255,0,0,255),2); count++; }
+        gray.delete(); circles.delete(); return { mat: out, meta:{ detected: count } };
+      },
+      async findContours({ cv, src, params }){ const { mode='external' }=params;
+        const gray=new cv.Mat(); cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);
+        const bin=new cv.Mat(); cv.threshold(gray,bin,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU);
+        const contours=new cv.MatVector(); const hierarchy=new cv.Mat();
+        cv.findContours(bin,contours,hierarchy,mode==='external'?cv.RETR_EXTERNAL:cv.RETR_TREE,cv.CHAIN_APPROX_SIMPLE);
+        const out=src.clone(); for(let i=0;i<contours.size();i++) cv.drawContours(out,contours,i,new cv.Scalar(0,255,0,255),2);
+        const cntNum=contours.size(); gray.delete(); bin.delete(); contours.delete(); hierarchy.delete();
+        return { mat: out, meta:{ contours: cntNum } };
+      },
+      async detectQuadAndWarp({ cv, src, params }){ const { margin=5 }=params;
+        const gray=new cv.Mat(); cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY); cv.GaussianBlur(gray,gray,new cv.Size(5,5),0);
+        const edges=new cv.Mat(); cv.Canny(gray,edges,50,150);
+        const cs=new cv.MatVector(); const hi=new cv.Mat(); cv.findContours(edges,cs,hi,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE);
+        let best=null, maxArea=0;
+        for(let i=0;i<cs.size();i++){ const c=cs.get(i); const peri=cv.arcLength(c,true); const approx=new cv.Mat(); cv.approxPolyDP(c,approx,0.02*peri,true);
+          if(approx.rows===4){ const area=cv.contourArea(approx); if(area>maxArea){ maxArea=area; best=approx.clone(); } } approx.delete(); }
+        if(!best){ gray.delete(); edges.delete(); cs.delete(); hi.delete(); return { mat: src.clone(), meta:{ found:false } }; }
+        const pts=[]; for(let i=0;i<4;i++) pts.push({ x: best.intAt(i,0), y: best.intAt(i,1) });
+        const {tl,tr,br,bl,W,H}=orderQuadWeighted(pts);
+        const srcTri=cv.matFromArray(4,1,cv.CV_32FC2,[tl.x,tl.y,tr.x,tr.y,br.x,br.y,bl.x,bl.y]);
+        const dstTri=cv.matFromArray(4,1,cv.CV_32FC2,[margin,margin,W+margin,margin,W+margin,H+margin,margin,H+margin]);
+        const M=cv.getPerspectiveTransform(srcTri,dstTri); const out=new cv.Mat(); cv.warpPerspective(src,out,M,new cv.Size(W+margin*2,H+margin*2));
+        gray.delete(); edges.delete(); cs.delete(); hi.delete(); best.delete(); srcTri.delete(); dstTri.delete(); M.delete();
+        return { mat: out, meta:{ found:true, width:W, height:H } };
+      },
+      async onnxSuperResolution({ cv, src, params }){ const { modelUrl }=params; const session=await getSession(modelUrl);
+        const rgb=new cv.Mat(); cv.cvtColor(src,rgb,cv.COLOR_RGBA2RGB);
+        const H=rgb.rows, W=rgb.cols; const chw=new Float32Array(3*H*W);
+        for(let y=0;y<H;y++) for(let x=0;x<W;x++){ const i=(y*W+x)*3, o=y*W+x; chw[0*H*W+o]=rgb.data[i]/255; chw[1*H*W+o]=rgb.data[i+1]/255; chw[2*H*W+o]=rgb.data[i+2]/255; }
+        const out=await session.run({ [session.inputNames[0]]: new ort.Tensor('float32', chw, [1,3,H,W]) });
+        const t=out[session.outputNames[0]], oH=t.dims[2], oW=t.dims[3]; const rgba=new cv.Mat(oH,oW,cv.CV_8UC4);
+        for(let y=0;y<oH;y++) for(let x=0;x<oW;x++){ const p=(y*oW+x)*4; rgba.data[p]=t.data[0*oH*oW+y*oW+x]*255; rgba.data[p+1]=t.data[1*oH*oW+y*oW+x]*255; rgba.data[p+2]=t.data[2*oH*oW+y*oW+x]*255; rgba.data[p+3]=255; }
+        rgb.delete(); return { mat: rgba, meta:{ scaleX:(oW/W).toFixed(2), scaleY:(oH/H).toFixed(2) } };
+      },
+      async onnxBackgroundRemoval({ cv, src, params }){
+        const { modelUrl='models/model_rmbg.onnx', inputSize=1024, threshold=0.35, closeIters=1, dilateIters=1 }=params;
+        const session=await getSession(modelUrl);
+        const srcCanvas=document.createElement('canvas'); srcCanvas.width=src.cols; srcCanvas.height=src.rows; cv.imshow(srcCanvas,src);
+        const sq=document.createElement('canvas'); sq.width=inputSize; sq.height=inputSize; const ctx=get2d(sq); ctx.fillStyle='black'; ctx.fillRect(0,0,inputSize,inputSize);
+        const scale=Math.min(inputSize/src.cols, inputSize/src.rows); const w=Math.round(src.cols*scale), h=Math.round(src.rows*scale);
+        const x=Math.floor((inputSize-w)/2), y=Math.floor((inputSize-h)/2); ctx.drawImage(srcCanvas,0,0,srcCanvas.width,srcCanvas.height,x,y,w,h);
+        const chw=toCHWFloatNormalized(sq,'-1to1'); const out=await session.run({ [session.inputNames[0]]: new ort.Tensor('float32', chw, [1,3,inputSize,inputSize]) });
+        const t=out[session.outputNames[0]]; const oH=t.dims[2], oW=t.dims[3]; const maskSmall=new cv.Mat(oH,oW,cv.CV_8UC1);
+        for(let yy=0;yy<oH;yy++) for(let xx=0;xx<oW;xx++) maskSmall.ucharPtr(yy,xx)[0] = t.data[yy*oW+xx]>threshold ? 255 : 0;
+        const mask=new cv.Mat(); cv.resize(maskSmall,mask,new cv.Size(src.cols,src.rows),0,0,cv.INTER_LINEAR);
+        // 形態學修補
+        if(closeIters>0){ const k=cv.getStructuringElement(cv.MORPH_ELLIPSE,new cv.Size(3,3)); for(let i=0;i<closeIters;i++) cv.morphologyEx(mask,mask,cv.MORPH_CLOSE,k); k.delete();}
+        if(dilateIters>0){ const k2=cv.getStructuringElement(cv.MORPH_ELLIPSE,new cv.Size(3,3)); for(let i=0;i<dilateIters;i++) cv.dilate(mask,mask,k2); k2.delete();}
+        const rgba=new cv.Mat(src.rows,src.cols,cv.CV_8UC4); let fgPixels=0;
+        for(let yy=0;yy<src.rows;yy++) for(let xx=0;xx<src.cols;xx++){ const s=(yy*src.cols+xx)*4; const m=mask.ucharPtr(yy,xx)[0]; rgba.data[s]=src.data[s]; rgba.data[s+1]=src.data[s+1]; rgba.data[s+2]=src.data[s+2]; rgba.data[s+3]=m; if(m>0) fgPixels++; }
+        const coverage = +(fgPixels/(src.rows*src.cols)*100).toFixed(2);
+        maskSmall.delete(); mask.delete(); srcCanvas.remove(); sq.remove();
+        return { mat: rgba, meta:{ threshold, closeIters, dilateIters, coveragePercent: coverage } };
+      },
+      async rmbgQuadWarp({ cv, src, params }){
+        const { modelUrl='models/model_rmbg.onnx', inputSize=1024, threshold=0.35, closeIters=1, dilateIters=1, margin=5 }=params;
+        const r = await NodeImpls.onnxBackgroundRemoval({ cv, src, params:{ modelUrl,inputSize,threshold,closeIters,dilateIters } });
+        const rgba=r.mat;
+        const a=new cv.Mat(); cv.extractChannel(rgba,a,3);
+        const bin=new cv.Mat(); cv.threshold(a,bin,0,255,cv.THRESH_BINARY);
+        const cs=new cv.MatVector(); const hi=new cv.Mat(); cv.findContours(bin,cs,hi,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE);
+        let quad=null, maxScore=-1;
+        for(let i=0;i<cs.size();i++){
+          const cnt=cs.get(i); const area=cv.contourArea(cnt); if(area<100) continue;
+          const peri=cv.arcLength(cnt,true); let approx=new cv.Mat(); cv.approxPolyDP(cnt,approx,0.02*peri,true);
+          if(approx.rows!==4){
+            const hull=new cv.Mat(); cv.convexHull(cnt,hull,false,true);
+            const peri2=cv.arcLength(hull,true); const approx2=new cv.Mat(); cv.approxPolyDP(hull,approx2,0.02*peri2,true);
+            if(approx2.rows===4){ approx=approx2; } else {
+              const rect=cv.minAreaRect(cnt); const pts=cv.RotatedRect.points(rect);
+              approx = cv.matFromArray(4,1,cv.CV_32SC2,[pts[0].x,pts[0].y,pts[1].x,pts[1].y,pts[2].x,pts[2].y,pts[3].x,pts[3].y]);
+            }
+          }
+          const pts=[]; for(let k=0;k<4;k++) pts.push({ x: approx.intAt(k,0), y: approx.intAt(k,1) });
+          const {W,H}=orderQuadWeighted(pts); const ratio=W/H; const ratioScore=Math.exp(-Math.abs(Math.log(ratio)));
+          const score = area * ratioScore; if(score>maxScore){ maxScore=score; quad=approx.clone(); }
+          approx.delete();
+        }
+        if(!quad){ a.delete(); bin.delete(); cs.delete(); hi.delete(); rgba.delete(); return { mat: src.clone(), meta:{ found:false, inherited:r.meta } }; }
+        const pts=[]; for(let i=0;i<4;i++) pts.push({ x: quad.intAt(i,0), y: quad.intAt(i,1) });
+        const {tl,tr,br,bl,W,H}=orderQuadWeighted(pts);
+        const srcTri=cv.matFromArray(4,1,cv.CV_32FC2,[tl.x,tl.y,tr.x,tr.y,br.x,br.y,bl.x,bl.y]);
+        const dstTri=cv.matFromArray(4,1,cv.CV_32FC2,[margin,margin,W+margin,margin,W+margin,H+margin,margin,H+margin]);
+        const M=cv.getPerspectiveTransform(srcTri,dstTri); const out=new cv.Mat(); cv.warpPerspective(src,out,M,new cv.Size(W+margin*2,H+margin*2));
+        a.delete(); bin.delete(); cs.delete(); hi.delete(); quad.delete(); rgba.delete(); srcTri.delete(); dstTri.delete(); M.delete();
+        return { mat: out, meta:{ found:true, width:W, height:H, inherited:r.meta } };
+      },
+      async perspectiveTransform({ cv, src, params }){ const { points=[[0,0],[1,0],[1,1],[0,1]], size=null }=params; const [tl,tr,br,bl]=points; const w=size?.w||src.cols, h=size?.h||src.rows;
+        const s=cv.matFromArray(4,1,cv.CV_32FC2,[tl[0],tl[1],tr[0],tr[1],br[0],br[1],bl[0],bl[1]]); const d=cv.matFromArray(4,1,cv.CV_32FC2,[0,0,w,0,w,h,0,h]);
+        const M=cv.getPerspectiveTransform(s,d); const out=new cv.Mat(); cv.warpPerspective(src,out,M,new cv.Size(w,h)); s.delete(); d.delete(); M.delete(); return { mat: out, meta:{ points } };
+      },
+      async affineTransform({ cv, src, params }){ const { points=[[0,0],[1,0],[0,1]], size=null }=params; const [p1,p2,p3]=points; const w=size?.w||src.cols, h=size?.h||src.rows;
+        const s=cv.matFromArray(3,1,cv.CV_32FC2,[p1[0],p1[1],p2[0],p2[1],p3[0],p3[1]]); const d=cv.matFromArray(3,1,cv.CV_32FC2,[0,0,w,0,0,h]);
+        const M=cv.getAffineTransform(s,d); const out=new cv.Mat(); cv.warpAffine(src,out,M,new cv.Size(w,h)); s.delete(); d.delete(); M.delete(); return { mat: out, meta:{ points } };
+      },
+    };
+
+    // 執行 Pipeline，收集 meta 與時間
+    async function runPipelineOnCanvas(p, baseCanvas){
+      if(!cvReady) throw new Error('OpenCV 未就緒');
+      let mat = matFromCanvas(cvObj, baseCanvas);
+      const steps=[];
+      for(const node of p.nodes){
+        const impl=NodeImpls[node.kind]; if(!impl) continue;
+        const t0=now();
+        try{
+          const ret = await impl({ cv:cvObj, src:mat, params:node.params });
+          const next = ret?.mat || ret; const meta = ret?.meta || null;
+          mat.delete(); mat = next;
+          node._lastMeta = meta || null; // 儲存到節點，編輯器可顯示
+          steps.push({ name:node.name||node.kind, ms:Math.round(now()-t0), meta });
+        }catch(e){ console.error('節點執行錯誤', node.kind, e); steps.push({ name:node.name||node.kind, error:String(e) }); toast(`節點錯誤：${node.name||node.kind}`,'error'); }
+      }
+      const outCanvas = canvasFromMat(cvObj, mat); mat.delete();
+      return { canvas: outCanvas, steps };
+    }
+
+    function renderResultsGrid(){
+      // 清空舊結果
+      $$('.pl-result', resultsGrid).forEach(el=>el.remove());
+      // 建格子
+      pipelines.forEach((p,idx)=>{
+        const card=document.createElement('div'); card.className='pl-result border rounded-xl p-2 bg-white relative corner-accent ' + (idx%3===0?'corner-sky':idx%3===1?'corner-fuchsia':'corner-amber');
+        const head=document.createElement('div'); head.className='flex items-center justify-between mb-1';
+        const name=document.createElement('div'); name.className='text-xs text-gray-500'; name.textContent=p.name;
+        const dl=document.createElement('button'); dl.className='text-xs px-2 py-1 rounded bg-neutral-100 border'; dl.textContent='下載';
+        dl.onclick=()=>{ const canv=card.querySelector('canvas'); if(!canv) return; canv.toBlob(b=>{ if(!b) return; const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=p.name+'.png'; a.click(); URL.revokeObjectURL(a.href); }); };
+        head.append(name, dl);
+        const holder=document.createElement('div'); holder.className='w-full overflow-auto';
+        const canv=document.createElement('canvas'); canv.className='w-full h-auto'; holder.appendChild(canv);
+        const log=document.createElement('div'); log.className='text-[11px] text-gray-600 mt-2 whitespace-pre-wrap bg-neutral-50/60 rounded-lg border p-2';
+        log.textContent='尚未執行。';
+        card.append(head, holder, log); card.dataset.logId=p.id;
+        resultsGrid.appendChild(card);
+      });
+    }
+
+    function formatLog(p, steps, totalMs){
+      const lines=[];
+      lines.push(`Pipeline：${p.name}（總耗時 ${totalMs} ms）`);
+      steps.forEach((s,i)=>{
+        const head = `  ${i+1}. ${s.name}  ${s.error? '❌ '+s.error : `✅ ${s.ms} ms`}`;
+        lines.push(head);
+        if(s.meta){
+          lines.push('     自適應/回報：' + JSON.stringify(s.meta));
+        }
+      });
+      return lines.join('\n');
+    }
+
+    async function runAll(){
+      if(!inputImg.src) return [];
+      setRunning(true);
+      renderResultsGrid(); // 確保格子存在（避免只有 A 時沒畫出）
+      const base = canvasFromImage(inputImg);
+      const results=[];
+      for(const p of pipelines){
+        const card = $$('.pl-result', resultsGrid)[pipelines.findIndex(x=>x.id===p.id)];
+        if(card){ let sp=card.querySelector('.spinner'); if(!sp){ sp=document.createElement('div'); sp.className='spinner absolute top-2 right-2'; card.appendChild(sp);} }
+        const t0=now();
+        const out = await runPipelineOnCanvas(p, base);
+        const totalMs = Math.round(now()-t0);
+        results.push({ id:p.id, name:p.name, canvas:out.canvas, steps:out.steps, totalMs });
+        if(card){ const sp=card.querySelector('.spinner'); if(sp) sp.remove(); }
+      }
+      setRunning(false,'完成'); toast('全部 Pipeline 執行完成','ok');
+      return results;
+    }
+
+    async function handleRunAll(){
+      const outs = await runAll();
+      outs.forEach(o=>{
+        const cards=$$('.pl-result', resultsGrid); const idx=pipelines.findIndex(p=>p.id===o.id);
+        const card=cards[idx]; if(!card) return;
+        const target=card.querySelector('canvas'); target.width=o.canvas.width; target.height=o.canvas.height; get2d(target).drawImage(o.canvas,0,0);
+        const log=card.querySelector('div.text-[11px]'); log.textContent = formatLog(pipelines[idx], o.steps, o.totalMs);
+      });
+      // 更新右側編輯器中的「上次自適應結果」
+      renderNodesPanel();
+    }
+
+    btnRunAll.onclick = handleRunAll; btnRunAll2.onclick = handleRunAll;
+
+    btnAddPipeline.onclick = ()=>{ const id=uid('pl'); pipelines.push({ id, name:'Pipeline '+String.fromCharCode(65+pipelines.length), nodes:[] }); activePipelineId=id; renderPipelines(); renderNodesPanel(); renderResultsGrid(); };
+
+    // 快速流程
+    btnQuickDocFix.onclick=()=>{ const p=pipelines.find(x=>x.id===activePipelineId); if(!p) return; p.nodes.push(defaultNode('onnxBackgroundRemoval')); p.nodes.push(defaultNode('rmbgQuadWarp')); renderNodesPanel(); toast('已加入：去背 + 去背梯形校正'); };
+    btnQuickSR.onclick=()=>{ const p=pipelines.find(x=>x.id===activePipelineId); if(!p) return; p.nodes.push(defaultNode('onnxSuperResolution')); renderNodesPanel(); toast('已加入：超解析度'); };
+
+    // ===== 手動四點 =====
+    let picking=false, pickPts=[], pickScale=1, imgRect=null;
+    function drawPins(){ pickLayer.innerHTML=''; pickPts.forEach((pt,i)=>{ const d=document.createElement('div'); d.className='pin'; d.style.left=pt.x+'px'; d.style.top=pt.y+'px'; const t=document.createElement('div'); t.className='pin-text'; t.textContent=String(i+1); d.appendChild(t); pickLayer.appendChild(d); }); }
+    function clientToImage(x,y){ if(!imgRect) return {x,y}; const ix=(x-imgRect.left)/pickScale; const iy=(y-imgRect.top)/pickScale; return {x:ix,y:iy}; }
+    btnPickQuad.onclick=()=>{
+      if(!inputImg.src){ toast('請先上傳圖片','error'); return; }
+      picking=true; pickPts=[]; pickLayer.classList.remove('hidden'); pickLayer.style.pointerEvents='auto'; pickHint.classList.remove('hidden'); toast('開始標註四點：TL→TR→BR→BL');
+      const imgEl=inputImg; imgRect=imgEl.getBoundingClientRect(); pickScale = imgRect.width/imgEl.naturalWidth;
+      pickLayer.style.left='0'; pickLayer.style.top='0'; pickLayer.style.width=imgRect.width+'px'; pickLayer.style.height=imgRect.height+'px'; pickLayer.style.marginTop='-'+imgRect.height+'px';
+    };
+    document.addEventListener('keydown',(e)=>{ if(!picking) return; if(e.key==='Escape'){ picking=false; pickLayer.classList.add('hidden'); pickLayer.style.pointerEvents='none'; pickHint.classList.add('hidden'); toast('已取消','info'); } if(e.key==='Backspace'){ pickPts.pop(); drawPins(); } });
+    pickLayer.addEventListener('click',(e)=>{ if(!picking) return; const pt=clientToImage(e.clientX,e.clientY); pickPts.push(pt); drawPins(); if(pickPts.length===4){ picking=false; pickLayer.style.pointerEvents='none'; pickHint.classList.add('hidden'); const p=pipelines.find(x=>x.id===activePipelineId); if(!p) return; const node=defaultNode('perspectiveTransform'); node.params.points = pickPts.map(p=>[Math.round(p.x),Math.round(p.y)]); p.nodes.push(node); renderNodesPanel(); toast('已加入「透視校正」節點（手動四點）','ok'); } });
+
+    // 初始
+    function init(){ renderResultsGrid(); renderNodesPanel(); }
+    init();
+  </script>
+</body>
+</html>
