@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ASTRO//ARCANE — 神祕科技占星 v3 (Streaming)</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div class="starfield"></div>
+  <div class="space3d" aria-hidden="true">
+    <div class="sun"></div>
+    <div class="orbit o1"><div class="planet p1"></div></div>
+    <div class="orbit o2"><div class="planet p2"></div></div>
+    <div class="orbit o3"><div class="planet p3"></div></div>
+    <div class="orbit o4"><div class="planet p4"></div></div>
+    <div class="orbit o5"><div class="planet p5"></div></div>
+    <div class="orbit o6"><div class="planet p6"></div></div>
+    <div class="orbit o7"><div class="planet p7"></div></div>
+    <div class="orbit o8"><div class="planet p8"></div></div>
+    <div class="orbit o9"><div class="planet p9"></div></div>
+  </div>
+
+  <header class="topbar">
+    <div class="logo glitch" data-text="ASTRO//ARCANE">ASTRO//ARCANE</div>
+    <div class="subtitle">Mystical‑Tech Astrology Engine // v3 · Streaming</div>
+  </header>
+
+  <main class="container">
+    <section class="card glass">
+      <h2>輸入資料</h2>
+      <div class="grid">
+        <label class="field">
+          <span>出生地（地名）</span>
+          <input id="place" type="text" placeholder="例：台北市 或 Tokyo, JP">
+          <small>未填經緯度時，系統會以地名進行地理編碼並自動判斷時區。</small>
+        </label>
+
+        <label class="field">
+          <span>緯度（可選）</span>
+          <input id="lat" type="number" step="0.000001" placeholder="25.037">
+        </label>
+
+        <label class="field">
+          <span>經度（可選）</span>
+          <input id="lng" type="number" step="0.000001" placeholder="121.564">
+        </label>
+
+        <label class="field">
+          <span>出生日期</span>
+          <input id="date" type="date">
+        </label>
+
+        <label class="field">
+          <span>出生時間（當地）</span>
+          <input id="time" type="time" step="60">
+          <small>請盡量精確到分鐘；若不確定，可先估計。</small>
+        </label>
+
+        <div class="actions">
+          <button id="btnGeo" class="btn secondary">使用我的定位</button>
+          <button id="btnCalc" class="btn primary glow">計算星盤</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="viz" class="card glass hidden">
+      <h2>星盤視覺化</h2>
+      <div class="canvas-wrap">
+        <canvas id="chartCanvas" width="900" height="900" aria-label="出生星盤"></canvas>
+        <div id="tooltip" class="tooltip hidden"></div>
+      </div>
+      <div id="legend" class="legend"></div>
+      <div id="readout" class="readout"></div>
+    </section>
+
+    <section id="tables" class="card glass hidden">
+      <h2>詳細列表</h2>
+      <div class="tables">
+        <div>
+          <h3>行星與上升</h3>
+          <table id="planetTable">
+            <thead><tr><th>符號</th><th>名稱</th><th>位置</th><th>落入宮位</th><th>宮位意義</th><th>尊貴/失勢</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div>
+          <h3>宮位</h3>
+          <table id="houseTable">
+            <thead><tr><th>宮位</th><th>宮首</th><th>代表意義</th><th>此宮行星</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div>
+          <h3>相位</h3>
+          <table id="aspectTable">
+            <thead><tr><th>組合</th><th>類型</th><th>偏離（°）</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div id="gtList" class="gt"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="aiSec" class="card glass hidden">
+      <h2>🔮 AI 解讀（Streaming）</h2>
+      <div id="aiText" class="ai-text muted">計算完成後自動串流生成內容，無需輸入任何金鑰。</div>
+    </section>
+
+    <section class="card glass credits">
+      <h2>引用 / 致謝</h2>
+      <ul>
+        <li>星體計算：<strong>Swiss Ephemeris（pyswisseph / swisseph）</strong></li>
+        <li>地理編碼：<strong>geopy + Nominatim（OpenStreetMap）</strong></li>
+        <li>時區判定：<strong>timezonefinder</strong></li>
+        <li>AI 文字解讀（Streaming）：<strong>OpenAI API（gpt‑4o；環境變數 OPENAI_API_KEY）</strong></li>
+        <li>可視化：Canvas 霓虹圖輪 + CSS 3D 太陽系背景</li>
+      </ul>
+      <p class="note">占星屬於象徵語言與自我探索工具，非決定論與醫療／法律建議。</p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div>ASTRO//ARCANE © 2025</div>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
