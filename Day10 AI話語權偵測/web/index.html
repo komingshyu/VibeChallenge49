@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>AI Discourse Scanner v3</title>
+  <link rel="icon" href="./favicon.svg" />
+  <link rel="stylesheet" href="./styles.css"/>
+  <meta name="color-scheme" content="light">
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header>
+    <div class="container brand">
+      <img src="./favicon.svg" alt="logo"/>
+      <h1>AI Discourse Scanner｜AI 時代話語權檢測</h1>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="panel">
+      <div class="controls">
+        <input id="topic" type="text" placeholder="輸入主題，例如：生成式 AI 政策、台灣能源轉型、量子計算..." />
+        <input id="num" type="number" min="5" max="100" step="1" value="20" title="抓取 SERP 結果數"/>
+        <button id="btnScan">搜尋並分析</button>
+        <button id="btnReset" class="ghost">清空</button>
+        <span class="flex-1"></span>
+        <button id="btnSettings" class="ghost">設定</button>
+      </div>
+      <div class="tabs">
+        <div class="tab active" data-tab="results">掃描結果</div>
+        <div class="tab" data-tab="viz">可視化</div>
+        <div class="tab" data-tab="about">說明</div>
+      </div>
+
+      <div class="grid" id="tab-results">
+        <div class="small">狀態：<span id="statusText">待命</span></div>
+        <div style="overflow:auto; margin-top:8px;">
+          <table class="table">
+            <thead>
+              <tr>
+                <th style="width:28%;">網域</th>
+                <th style="width:16%;">robots.txt</th>
+                <th style="width:18%;">AI 友善度</th>
+                <th style="width:18%;">SERP 指標</th>
+                <th style="width:18%;">AI 話語權</th>
+                <th class="right" style="width:10%;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="controls">
+            <input id="manualHost" type="text" placeholder="手動新增站點（例如：sub.example.com 或 example.org）"/>
+            <button id="btnAddHost">新增</button>
+            <span class="small">小撇步：貼上完整 URL 我們也會自動萃取主/次網域。</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid" id="tab-viz" style="display:none;">
+        <div class="card chart-card">
+          <h3>散點圖：SERP × AI 友善度（泡泡大小＝AI 話語權）</h3>
+          <canvas id="chartScatter"></canvas>
+        </div>
+        <div class="card chart-card">
+          <h3>Top 10：AI 話語權</h3>
+          <canvas id="chartBar"></canvas>
+        </div>
+        <div class="card chart-card">
+          <h3>Top 10：AI 友善度</h3>
+          <canvas id="chartBarAi"></canvas>
+        </div>
+        <div class="card chart-card">
+          <h3>robots.txt 狀態分佈</h3>
+          <canvas id="chartRobots"></canvas>
+        </div>
+        <div class="card chart-card">
+          <h3>AI 爬蟲決策分佈（allow / partial / unknown / disallow）</h3>
+          <canvas id="chartAgents"></canvas>
+        </div>
+      </div>
+
+      <div class="grid" id="tab-about" style="display:none;">
+        <div class="card">
+          <h3>方法學概要</h3>
+          <p>本工具僅抓取 <span class="kbd">robots.txt</span> 並解析對常見 AI 爬蟲的規則，同時彙整 SERP 可見度。兩者經權重合成「AI 話語權」。你可以在「設定」視窗中自訂爬蟲清單與權重。</p>
+          <ul>
+            <li>robots 404 視為隱含允許（可改）</li>
+            <li>名次加權：<span class="kbd">1 / log2(rank + 1)</span></li>
+            <li>Power = <span class="kbd">0.7 × SERP</span> + <span class="kbd">0.3 × AI 友善度</span></li>
+          </ul>
+          <p class="small">※ 注意：不同供應商對「Extended」類指令的解讀與遵循可能不同；上述評分僅供研究與比較，不代表法律意義。</p>
+        </div>
+        <div class="card">
+          <h3>一鍵啟動</h3>
+          <ol>
+            <li>進入 <span class="kbd">server/</span>，複製 <span class="kbd">.env.example</span> 成 <span class="kbd">.env</span> 並設定 PROVIDER 與金鑰</li>
+            <li><span class="kbd">npm install</span> → <span class="kbd">npm start</span></li>
+            <li>開啟 <span class="kbd">http://localhost:8787</span></li>
+          </ol>
+          <p class="small">沒有金鑰？選擇 PROVIDER=<span class="kbd">mock</span> 先體驗 UI。</p>
+        </div>
+      </div>
+    </section>
+
+    <footer>MIT © AI Discourse Scanner · 人機協作</footer>
+  </main>
+
+  <dialog id="robotsDialog" class="modal">
+    <header class="brand" style="padding:14px 16px;">
+      <img src="./favicon.svg" alt="" />
+      <strong>robots.txt 預覽</strong>
+      <span class="flex-1"></span>
+      <button id="closeRobots" class="btn-icon">✕</button>
+    </header>
+    <div class="content">
+      <div id="robotsMeta" class="small"></div>
+      <pre id="robotsText"></pre>
+    </div>
+    <div class="footer">
+      <button id="copyRobots" class="ghost">複製</button>
+      <button id="openRobots" class="ghost">開啟原始網址</button>
+      <button id="closeRobots2">關閉</button>
+    </div>
+  </dialog>
+
+  <dialog id="settingsDialog" class="modal">
+    <header style="padding:14px 16px; display:flex; align-items:center; gap:8px;">
+      <strong>設定</strong>
+      <span class="flex-1"></span>
+      <button id="closeSettings" class="btn-icon">✕</button>
+    </header>
+    <div class="content">
+      <div class="grid">
+        <div class="card">
+          <h4>AI 爬蟲清單</h4>
+          <p class="small">可用逗號或換行分隔；大小寫不敏感。常見包含：<span class="kbd">GPTBot</span>、<span class="kbd">CCBot</span>、<span class="kbd">ClaudeBot</span>、<span class="kbd">PerplexityBot</span>、<span class="kbd">Google-Extended</span>、<span class="kbd">Applebot-Extended</span>、<span class="kbd">Meta-ExternalAgent</span>。</p>
+          <textarea id="agentsInput" rows="4" style="width:100%; background:#fff; color:#0f172a; border:1px solid var(--border); border-radius:10px; padding:10px;"></textarea>
+        </div>
+        <div class="card">
+          <h4>權重</h4>
+          <div class="controls">
+            <label>Power 中 SERP 權重</label>
+            <input type="number" id="wSerp" min="0" max="1" step="0.05" value="0.7" />
+            <label>AI 友善度權重</label>
+            <input type="number" id="wAi" min="0" max="1" step="0.05" value="0.3" />
+            <label>robots 404 視為允許</label>
+            <select id="treat404">
+              <option value="allow" selected>允許</option>
+              <option value="unknown">未知</option>
+              <option value="disallow">視為拒絕</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <button id="saveSettings" class="good">儲存</button>
+      <button id="closeSettings2" class="ghost">取消</button>
+    </div>
+  </dialog>
+
+  <script src="./app.js"></script>
+</body>
+</html>

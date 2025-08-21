@@ -1,0 +1,144 @@
+/* Light theme, responsive charts */
+:root{
+  --bg:#f6f8fc;
+  --panel:#ffffff;
+  --panel-2:#ffffff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --accent:#2563eb;
+  --accent-2:#22c55e;
+  --warn:#b45309;
+  --danger:#b91c1c;
+  --good:#15803d;
+  --chip:#eef2ff;
+  --border:#e5e7eb;
+  --shadow: 0 10px 24px rgba(15,23,42,.08);
+}
+
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+body{
+  margin:0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  background:
+    radial-gradient(1200px 800px at 10% -10%, #edf2ff, transparent),
+    var(--bg);
+  color:var(--text);
+}
+
+header{
+  position:sticky; top:0; z-index:10;
+  backdrop-filter: blur(8px);
+  background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.75));
+  border-bottom:1px solid var(--border);
+}
+
+.container{ max-width:1100px; margin:0 auto; padding: 16px 20px; }
+
+.brand{ display:flex; align-items:center; gap:12px; }
+.brand img{ width:28px; height:28px; }
+.brand h1{ font-size:18px; margin:0; letter-spacing:.2px; font-weight:700; }
+
+.panel{
+  background:linear-gradient(180deg,var(--panel), var(--panel-2));
+  border:1px solid var(--border);
+  border-radius:14px;
+  box-shadow: var(--shadow);
+}
+
+.controls{
+  display:flex; gap:12px; align-items:center; flex-wrap:wrap;
+  padding:14px;
+}
+.controls input[type="text"]{
+  flex:1; min-width:280px;
+  background:#fff; color:var(--text);
+  border:1px solid var(--border); border-radius:10px;
+  padding:12px 14px; outline:none;
+}
+.controls input[type="number"], .controls select{
+  background:#fff; color:var(--text);
+  border:1px solid var(--border); border-radius:10px;
+  padding:10px 12px; outline:none;
+}
+.controls button{
+  background:linear-gradient(180deg, #3b82f6, #2563eb);
+  border:1px solid #1d4ed8;
+  color:white; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:600;
+}
+.controls button:hover{ filter:brightness(1.05); }
+.controls .ghost{
+  background:#fff; border:1px dashed var(--border); color:var(--muted);
+}
+.controls .danger{
+  background:linear-gradient(180deg,#ef4444,#b91c1c); border-color:#b91c1c;
+}
+.controls .good{
+  background:linear-gradient(180deg,#22c55e,#15803d); border-color:#15803d;
+}
+
+.tabs{
+  display:flex; gap:2px; padding:8px; border-bottom:1px solid var(--border);
+}
+.tab{ padding:10px 12px; cursor:pointer; border-radius:10px; color:var(--muted); }
+.tab.active{ background:#f3f4f6; color:var(--text); border:1px solid var(--border); }
+
+.grid{ padding: 6px 12px 16px 12px; }
+
+.table{ width:100%; border-collapse:separate; border-spacing:0 8px; }
+.table th, .table td{ text-align:left; padding:10px 10px; }
+.table thead th{ font-size:12px; font-weight:700; color:var(--muted); border-bottom:1px solid var(--border); }
+.row{ background:#fff; border:1px solid var(--border); border-radius:12px; }
+
+.table td:first-child, .table th:first-child{ padding-left:14px; }
+.table td:last-child, .table th:last-child{ padding-right:14px; }
+
+.chips{ display:flex; gap:6px; flex-wrap:wrap; }
+.chip{ background:var(--chip); color:#3730a3; border:1px solid #e0e7ff; border-radius:999px; padding:4px 8px; font-size:12px; }
+
+.badge{ padding:4px 8px; border-radius:6px; font-size:12px; font-weight:700; display:inline-block; }
+.badge.ok{ background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; }
+.badge.warn{ background:#fff7ed; color:#92400e; border:1px solid #fed7aa; }
+.badge.err{ background:#fef2f2; color:#991b1b; border:1px solid #fecaca; }
+
+.score{ display:flex; align-items:center; gap:10px; }
+.score .bar{ position:relative; width:120px; height:8px; background:#e5e7eb; border-radius:8px; overflow:hidden; border:1px solid var(--border); }
+.score .bar > span{ position:absolute; left:0; top:0; bottom:0; width:0%; background:linear-gradient(90deg,#60a5fa,#34d399,#f59e0b); transition: width .3s ease; }
+
+.kbd{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; background:#f3f4f6; color:#111827; padding:2px 6px; border-radius:6px; border:1px solid var(--border); font-size:12px; }
+.small{ font-size:12px; color:var(--muted); }
+.actions{ display:flex; gap:6px; }
+.btn-icon{ background:#fff; border:1px solid var(--border); color:#374151; width:34px; height:34px; border-radius:8px; cursor:pointer; }
+.btn-icon:hover{ filter:brightness(1.05); }
+
+.tooltip{ position:relative; display:inline-block; }
+.tooltip:hover .tooltip-content{ opacity:1; visibility:visible; transform:translateY(0); }
+.tooltip-content{
+  position:absolute; z-index:20; top:110%; left:0;
+  min-width:280px; max-width:520px; background:#fff; color:var(--text); border:1px solid var(--border); border-radius:10px;
+  box-shadow: var(--shadow); padding:10px; opacity:0; visibility:hidden; transform:translateY(-4px); transition:all .15s ease;
+  white-space:pre-wrap; line-height:1.35; font-size:12px; max-height:320px; overflow:auto;
+}
+
+.flex{ display:flex; }
+.flex-1{ flex:1; }
+.right{ text-align:right; }
+.center{ text-align:center; }
+footer{ margin:28px 0 40px; text-align:center; color:var(--muted); font-size:12px; }
+
+dialog.modal{ border:none; border-radius:14px; padding:0; width:min(720px, 92vw); background:#fff; color:var(--text); box-shadow: var(--shadow); }
+.modal header{ padding:14px 16px; border-bottom:1px solid var(--border); }
+.modal .content{ padding:14px 16px; }
+.modal .footer{ padding:14px 16px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:8px; }
+.modal .content pre{ background:#f8fafc; border:1px solid var(--border); border-radius:10px; padding:12px; overflow:auto; max-height:60vh; }
+
+.card{ background:#fff; border:1px solid var(--border); border-radius:12px; padding:12px; margin:8px 0; box-shadow: var(--shadow); }
+
+/* Charts: container controls size; canvas fills container */
+.chart-card{ position:relative; width:100%; min-height:220px; height:clamp(220px, 40vh, 420px); }
+.chart-card canvas{ width:100% !important; height:100% !important; display:block; }
+
+@media (max-width: 900px){
+  .chart-card{ height:clamp(200px, 35vh, 360px); }
+  .controls{ gap:8px; }
+}
