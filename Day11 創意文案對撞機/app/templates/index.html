@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>創意文案對撞機</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}?v=103">
+</head>
+<body>
+  <header class="header">
+    <h1>創意文案對撞機</h1>
+    <p class="sub">把弱關聯詞彙撞出強顆粒感的靈感火花</p>
+  </header>
+
+  <!-- 用戶輸入區 -->
+  <section class="panel">
+    <h2>用戶輸入區</h2>
+    <div class="grid">
+      <div class="col">
+        <label for="productTerm">產品詞</label>
+        <input id="productTerm" placeholder="例如：降噪真無線耳機 / 氣炸鍋 / SaaS 客戶成功平台" />
+      </div>
+      <div class="col">
+        <label for="kInput">抽取對撞詞數量 (k)</label>
+        <input id="kInput" type="number" min="1" max="64" value="20" />
+      </div>
+      <div class="col">
+        <label for="langSelect">語言</label>
+        <select id="langSelect">
+          <option value="zh-TW" selected>繁體中文</option>
+          <option value="zh-CN">簡體中文</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+    </div>
+    <div class="actions">
+      <button id="btnAlign" type="button" class="btn">概念對齊</button>
+      <button id="btnTerms" type="button" class="btn">抽取待碰撞詞</button>
+    </div>
+  </section>
+
+  <!-- 概念對齊區 -->
+  <section class="panel">
+    <h2>概念對齊區</h2>
+    <div class="grid grid-4">
+      <div>
+        <h3>產品特性</h3>
+        <ul id="featuresList" class="list"></ul>
+      </div>
+      <div>
+        <h3>競品與比較</h3>
+        <ul id="competitorsList" class="list"></ul>
+      </div>
+      <div>
+        <h3>背景知識</h3>
+        <ul id="backgroundList" class="list"></ul>
+      </div>
+      <div>
+        <h3>關鍵字</h3>
+        <ul id="keywordsList" class="list"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 待碰撞詞彙區 -->
+  <section class="panel">
+    <h2>待碰撞詞彙區</h2>
+    <ul id="termsList" class="chips"></ul>
+    <div class="actions">
+      <button id="btnInitialCollision" type="button" class="btn primary">碰撞初試（流式）</button>
+    </div>
+  </section>
+
+  <!-- 碰撞初試區 -->
+  <section class="panel">
+    <h2>碰撞初試區</h2>
+    <div id="initialStream" class="cards"></div>
+  </section>
+
+  <!-- Persona 設定 -->
+  <section class="panel">
+    <h2>受眾 Persona 設定</h2>
+    <div class="grid grid-3">
+      <div>
+        <label for="personaName">名稱</label>
+        <input id="personaName" placeholder="例如：早起通勤者" />
+      </div>
+      <div>
+        <label for="personaAge">年齡</label>
+        <input id="personaAge" placeholder="例如：26–40" />
+      </div>
+      <div>
+        <label for="personaRole">身分/職業</label>
+        <input id="personaRole" placeholder="例如：科技業 PM／自由接案" />
+      </div>
+      <div>
+        <label for="personaPainPoints">動機/痛點</label>
+        <input id="personaPainPoints" placeholder="例如：通勤時間長、怕被打擾" />
+      </div>
+      <div>
+        <label for="personaTone">語氣偏好</label>
+        <input id="personaTone" placeholder="例如：俐落理性、避免過度誇張" />
+      </div>
+      <div>
+        <label for="mediaSelect">發布媒體</label>
+        <select id="mediaSelect">
+          <option value="">通用</option>
+          <option>Facebook 廣告</option>
+          <option>Facebook 貼文</option>
+          <option>Facebook 限時動態</option>
+          <option>Facebook 小編稿</option>
+          <option>Instagram 限時動態</option>
+          <option>Instagram 貼文</option>
+          <option>EDM</option>
+          <option>電商商品頁</option>
+          <option>LinkedIn 貼文</option>
+          <option>Threads 貼文</option>
+          <option>X（原 Twitter）</option>
+          <option>LINE 官方貼文</option>
+          <option>YouTube 影片描述</option>
+          <option>TikTok 短影音標題</option>
+          <option>社群社團貼文（如 FB/LINE 社團）</option>
+          <option>小紅書貼文</option>
+          <option>部落格中篇文章</option>
+        </select>
+      </div>
+    </div>
+    <div class="actions">
+      <button id="btnDeepCollision" type="button" class="btn">深度碰撞（流式）</button>
+    </div>
+  </section>
+
+  <!-- 深度碰撞區 -->
+  <section class="panel">
+    <h2>深度碰撞區</h2>
+    <div id="deepStream" class="cards"></div>
+  </section>
+
+  <!-- 候選文案（在初試區按「加入候選」會出現在這裡） -->
+  <section class="panel">
+    <h2>候選文案</h2>
+    <div id="candidateList" class="chips"></div>
+  </section>
+
+  <footer class="footer">
+    <div id="statusBar" class="status">載入中…</div>
+    <p>© 創意文案對撞機 · 串流輸出 · 以弱關聯詞激發高發散靈感</p>
+  </footer>
+
+  <!-- 放在最後並使用 cache-busting 參數 -->
+  <script src="{{ url_for('static', path='app.js') }}?v=102" defer></script>
+</body>
+</html>

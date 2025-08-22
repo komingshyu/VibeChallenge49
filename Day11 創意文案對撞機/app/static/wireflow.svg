@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="720" viewBox="0 0 1080 720">
+  <defs>
+    <style>
+      .box { fill:#0f1620; stroke:#2a3a51; stroke-width:2; rx:12; }
+      .txt { font: 14px 'Noto Sans TC', Arial, sans-serif; fill:#e6e9ef; }
+      .cap { font: 12px 'Noto Sans TC', Arial, sans-serif; fill:#9fb3c8; }
+      .arrow { stroke:#446ea9; stroke-width:2; marker-end:url(#arrowHead); }
+    </style>
+    <marker id="arrowHead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#446ea9"/>
+    </marker>
+  </defs>
+
+  <rect x="40" y="40" width="300" height="110" class="box"/>
+  <text x="60" y="70" class="txt">用戶輸入區</text>
+  <text x="60" y="95" class="cap">產品詞、K 值、對齊開關</text>
+
+  <rect x="400" y="40" width="300" height="170" class="box"/>
+  <text x="420" y="70" class="txt">概念對齊區</text>
+  <text x="420" y="95" class="cap">SERP → 特性/競品/背景</text>
+
+  <rect x="40" y="220" width="300" height="140" class="box"/>
+  <text x="60" y="250" class="txt">待碰撞詞彙區</text>
+  <text x="60" y="275" class="cap">固定詞庫抽樣/勾選</text>
+
+  <rect x="400" y="260" width="300" height="220" class="box"/>
+  <text x="420" y="290" class="txt">碰撞初試區（SSE）</text>
+  <text x="420" y="315" class="cap">k 詞 → k 則短文案</text>
+
+  <rect x="760" y="260" width="300" height="220" class="box"/>
+  <text x="780" y="290" class="txt">深度碰撞區（SSE）</text>
+  <text x="780" y="315" class="cap">候選文案 × Persona/媒體</text>
+
+  <rect x="760" y="40" width="300" height="170" class="box"/>
+  <text x="780" y="70" class="txt">Persona 設定</text>
+  <text x="780" y="95" class="cap">預設模板 + 自訂</text>
+
+  <path d="M 340 95 L 400 95" class="arrow"/>
+  <path d="M 190 180 L 190 220" class="arrow"/>
+  <path d="M 340 290 L 400 320" class="arrow"/>
+  <path d="M 700 370 L 760 370" class="arrow"/>
+  <path d="M 910 210 L 910 260" class="arrow"/>
+</svg>

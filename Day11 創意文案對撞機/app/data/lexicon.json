@@ -1,0 +1,1314 @@
+[
+  {
+    "term": "黑洞航班",
+    "pos": "noun",
+    "tag": "sci-fi"
+  },
+  {
+    "term": "量子泡沫",
+    "pos": "noun",
+    "tag": "science"
+  },
+  {
+    "term": "太空垃圾",
+    "pos": "noun",
+    "tag": "space"
+  },
+  {
+    "term": "資料湖",
+    "pos": "noun",
+    "tag": "tech"
+  },
+  {
+    "term": "邊緣運算",
+    "pos": "noun",
+    "tag": "tech"
+  },
+  {
+    "term": "模型蒸餾",
+    "pos": "noun",
+    "tag": "ai"
+  },
+  {
+    "term": "提示工程",
+    "pos": "noun",
+    "tag": "ai"
+  },
+  {
+    "term": "AI 代理人",
+    "pos": "noun",
+    "tag": "ai"
+  },
+  {
+    "term": "碳權交易",
+    "pos": "noun",
+    "tag": "sustain"
+  },
+  {
+    "term": "碳足跡",
+    "pos": "noun",
+    "tag": "sustain"
+  },
+  {
+    "term": "蔚藍檔案",
+    "pos": "noun",
+    "tag": "game"
+  },
+  {
+    "term": "靈魂拷問",
+    "pos": "noun",
+    "tag": "slang"
+  },
+  {
+    "term": "行人地獄",
+    "pos": "noun",
+    "tag": "city"
+  },
+  {
+    "term": "通勤小確幸",
+    "pos": "noun",
+    "tag": "life"
+  },
+  {
+    "term": "手搖飲",
+    "pos": "noun",
+    "tag": "food"
+  },
+  {
+    "term": "鹹酥雞",
+    "pos": "noun",
+    "tag": "food"
+  },
+  {
+    "term": "雞蛋糕",
+    "pos": "noun",
+    "tag": "food"
+  },
+  {
+    "term": "海風計畫",
+    "pos": "noun",
+    "tag": "edu"
+  },
+  {
+    "term": "雲爆雨",
+    "pos": "noun",
+    "tag": "weather"
+  },
+  {
+    "term": "通膨怪獸",
+    "pos": "noun",
+    "tag": "econ"
+  },
+  {
+    "term": "黑曜石",
+    "pos": "noun",
+    "tag": "object"
+  },
+  {
+    "term": "琥珀",
+    "pos": "noun",
+    "tag": "object"
+  },
+  {
+    "term": "睡眠債",
+    "pos": "noun",
+    "tag": "health"
+  },
+  {
+    "term": "腦內多巴胺",
+    "pos": "noun",
+    "tag": "health"
+  },
+  {
+    "term": "火山口咖啡",
+    "pos": "noun",
+    "tag": "food"
+  },
+  {
+    "term": "斷捨離",
+    "pos": "noun",
+    "tag": "life"
+  },
+  {
+    "term": "孤獨等級表",
+    "pos": "noun",
+    "tag": "life"
+  },
+  {
+    "term": "藍色星期一",
+    "pos": "noun",
+    "tag": "life"
+  },
+  {
+    "term": "溫室效應",
+    "pos": "noun",
+    "tag": "sustain"
+  },
+  {
+    "term": "沉浸式劇場",
+    "pos": "noun",
+    "tag": "art"
+  },
+  {
+    "term": "貼地飛行",
+    "pos": "verb",
+    "tag": "slang"
+  },
+  {
+    "term": "打工度假",
+    "pos": "noun",
+    "tag": "life"
+  },
+  {
+    "term": "離岸風電",
+    "pos": "noun",
+    "tag": "sustain"
+  },
+  {
+    "term": "低軌衛星",
+    "pos": "noun",
+    "tag": "space"
+  },
+  {
+    "term": "等比宇宙",
+    "pos": "noun",
+    "tag": "sci-fi"
+  },
+  {
+    "term": "白噪音",
+    "pos": "noun",
+    "tag": "sound"
+  },
+  {
+    "term": "聲學迷彩",
+    "pos": "noun",
+    "tag": "sound"
+  },
+  {
+    "term": "電光火石",
+    "pos": "noun",
+    "tag": "idiom"
+  },
+  {
+    "term": "破風手",
+    "pos": "noun",
+    "tag": "sport"
+  },
+  {
+    "term": "雨燕效率",
+    "pos": "noun",
+    "tag": "nature"
+  },
+  {
+    "term": "紙飛機理論",
+    "pos": "noun",
+    "tag": "idea"
+  },
+  {
+    "term": "時間水庫",
+    "pos": "noun",
+    "tag": "metaphor"
+  },
+  {
+    "term": "注意力黑市",
+    "pos": "noun",
+    "tag": "metaphor"
+  },
+  {
+    "term": "訊號與雜訊",
+    "pos": "noun",
+    "tag": "metaphor"
+  },
+  {
+    "term": "延遲容忍",
+    "pos": "noun",
+    "tag": "tech"
+  },
+  {
+    "term": "冷啟動",
+    "pos": "noun",
+    "tag": "tech"
+  },
+  {
+    "term": "甜蜜點",
+    "pos": "noun",
+    "tag": "metaphor"
+  },
+  {
+    "term": "黑客松",
+    "pos": "noun",
+    "tag": "tech"
+  },
+  {
+    "term": "雲端冷藏",
+    "pos": "noun",
+    "tag": "metaphor"
+  },
+  {
+    "term": "資料真空",
+    "pos": "noun",
+    "tag": "metaphor"
+  },
+  {
+    "term": "數位斷捨離",
+    "pos": "noun",
+    "tag": "life"
+  },
+  {
+    "term": "蜉蝣注意力",
+    "pos": "noun",
+    "tag": "metaphor"
+  },
+  {
+    "term": "拼圖經濟",
+    "pos": "noun",
+    "tag": "econ"
+  },
+  {
+    "term": "迷因引擎",
+    "pos": "noun",
+    "tag": "internet"
+  },
+  {
+    "term": "回音室效應",
+    "pos": "noun",
+    "tag": "soc"
+  },
+  {
+    "term": "海鷗理論",
+    "pos": "noun",
+    "tag": "idea"
+  },
+  {
+    "term": "地心引力",
+    "pos": "noun",
+    "tag": "science"
+  },
+  {
+    "term": "時間晶體",
+    "pos": "noun",
+    "tag": "science"
+  },
+  {
+    "term": "風暴玻璃",
+    "pos": "noun",
+    "tag": "object"
+  },
+  {
+    "term": "失眠城市",
+    "pos": "noun",
+    "tag": "metaphor"
+  },
+  {
+    "term": "外送冷空氣",
+    "pos": "noun",
+    "tag": "weather"
+  },
+  {
+    "term": "減法生活",
+    "pos": "noun",
+    "tag": "life"
+  },
+  {
+    "term": "光合作用",
+    "pos": "noun",
+    "tag": "nature"
+  },
+  {
+    "term": "藍海策略",
+    "pos": "noun",
+    "tag": "biz"
+  },
+  {
+    "term": "護城河",
+    "pos": "noun",
+    "tag": "biz"
+  },
+  {
+    "term": "行星齒輪",
+    "pos": "noun",
+    "tag": "mech"
+  },
+  {
+    "term": "磁懸浮",
+    "pos": "noun",
+    "tag": "mech"
+  },
+  {
+    "term": "海邊日出",
+    "pos": "noun",
+    "tag": "scene"
+  },
+  {
+    "term": "城市白噪",
+    "pos": "noun",
+    "tag": "sound"
+  },
+  {
+    "term": "薄荷記憶",
+    "pos": "noun",
+    "tag": "metaphor"
+  },
+  {
+    "term": "折射率",
+    "pos": "noun",
+    "tag": "science"
+  },
+  {
+    "term": "靜夜光",
+    "pos": "noun",
+    "tag": "metaphor"
+  },
+  {
+    "term": "紙感書寫",
+    "pos": "noun",
+    "tag": "object"
+  },
+  {
+    "term": "火箭沖壓",
+    "pos": "noun",
+    "tag": "mech"
+  },
+  {
+    "term": "地毯式搜索",
+    "pos": "verb",
+    "tag": "mil"
+  },
+  {
+    "term": "針孔成像",
+    "pos": "noun",
+    "tag": "optics"
+  },
+  {
+    "term": "月球背面",
+    "pos": "noun",
+    "tag": "space"
+  },
+  {
+    "term": "無重力清醒",
+    "pos": "noun",
+    "tag": "metaphor"
+  },
+  {
+    "term": "長尾效應",
+    "pos": "noun",
+    "tag": "econ"
+  },
+  {
+    "term": "局部放電",
+    "pos": "noun",
+    "tag": "elec"
+  },
+  {
+    "term": "量子糾纏",
+    "pos": "noun",
+    "tag": "science"
+  },
+  {
+    "term": "遞迴宇宙",
+    "pos": "noun",
+    "tag": "sci-fi"
+  },
+  {
+    "term": "隱形雨衣",
+    "pos": "noun",
+    "tag": "idea"
+  },
+  {
+    "term": "風切聲",
+    "pos": "noun",
+    "tag": "sound"
+  },
+  {
+    "term": "夜跑計畫",
+    "pos": "noun",
+    "tag": "life"
+  },
+  {
+    "term": "玻璃神經",
+    "pos": "noun",
+    "tag": "metaphor"
+  },
+  {
+    "term": "影子庫存",
+    "pos": "noun",
+    "tag": "biz"
+  },
+  {
+    "term": "香草協議",
+    "pos": "noun",
+    "tag": "law"
+  },
+  {
+    "term": "迴圈經濟",
+    "pos": "noun",
+    "tag": "sustain"
+  },
+  {
+    "term": "即時譯者",
+    "pos": "noun",
+    "tag": "ai"
+  },
+  {
+    "term": "冷靜噪音",
+    "pos": "noun",
+    "tag": "sound"
+  },
+  {
+    "term": "書寫肌肉",
+    "pos": "noun",
+    "tag": "metaphor"
+  },
+  {
+    "term": "溫差記憶",
+    "pos": "noun",
+    "tag": "metaphor"
+  },
+  {
+    "term": "琢磨延遲",
+    "pos": "noun",
+    "tag": "metaphor"
+  },
+  {
+    "term": "低電量焦慮",
+    "pos": "noun",
+    "tag": "life"
+  },
+  {
+    "term": "雲端樂高",
+    "pos": "noun",
+    "tag": "tech"
+  },
+  {
+    "term": "神經雪崩",
+    "pos": "noun",
+    "tag": "ai"
+  },
+  {
+    "term": "海霧濾鏡",
+    "pos": "noun",
+    "tag": "scene"
+  },
+  {
+    "term": "銀河護唇",
+    "pos": "noun",
+    "tag": "metaphor"
+  },
+  {
+    "term": "通勤雨衣",
+    "pos": "noun",
+    "tag": "life"
+  },
+  {
+    "term": "輕盈盔甲",
+    "pos": "noun",
+    "tag": "metaphor"
+  },
+  {
+    "term": "滑行距離",
+    "pos": "noun",
+    "tag": "sport"
+  },
+  {
+    "term": "夜光按鍵",
+    "pos": "noun",
+    "tag": "object"
+  },
+  {
+    "term": "語意防噪",
+    "pos": "noun",
+    "tag": "ai"
+  },
+  {
+    "term": "拂塵演算法",
+    "pos": "noun",
+    "tag": "ai"
+  },
+  {
+    "term": "邏輯雨刷",
+    "pos": "noun",
+    "tag": "metaphor"
+  },
+  {
+    "term": "引力膠帶",
+    "pos": "noun",
+    "tag": "sci-fi"
+  },
+  {
+    "term": "洞見儀表板",
+    "pos": "noun",
+    "tag": "biz"
+  },
+  {
+    "term": "指尖風洞",
+    "pos": "noun",
+    "tag": "mech"
+  },
+  {
+    "term": "靜音隧道",
+    "pos": "noun",
+    "tag": "sound"
+  },
+  {
+    "term": "秒針花園",
+    "pos": "noun",
+    "tag": "metaphor"
+  },
+  {
+    "term": "耐心演算法",
+    "pos": "noun",
+    "tag": "ai"
+  },
+  {
+    "term": "節奏代謝",
+    "pos": "noun",
+    "tag": "metaphor"
+  },
+  {
+    "term": "通勤潤滑劑",
+    "pos": "noun",
+    "tag": "life"
+  },
+  {
+    "term": "腦內除濕機",
+    "pos": "noun",
+    "tag": "metaphor"
+  },
+  {
+    "term": "錯失恐懼",
+    "pos": "noun",
+    "tag": "psych"
+  },
+  {
+    "term": "資訊繭房",
+    "pos": "noun",
+    "tag": "soc"
+  },
+  {
+    "term": "演算法焦慮",
+    "pos": "noun",
+    "tag": "ai"
+  },
+  {
+    "term": "社交電量",
+    "pos": "noun",
+    "tag": "life"
+  },
+  {
+    "term": "數位遊牧",
+    "pos": "noun",
+    "tag": "life"
+  },
+  {
+    "term": "注意力經濟",
+    "pos": "noun",
+    "tag": "econ"
+  },
+  {
+    "term": "情緒勒索",
+    "pos": "noun",
+    "tag": "slang"
+  },
+  {
+    "term": "精神內耗",
+    "pos": "noun",
+    "tag": "slang"
+  },
+  {
+    "term": "反脆弱",
+    "pos": "noun",
+    "tag": "biz"
+  },
+  {
+    "term": "黑天鵝事件",
+    "pos": "noun",
+    "tag": "risk"
+  },
+  {
+    "term": "林迪效應",
+    "pos": "noun",
+    "tag": "econ"
+  },
+  {
+    "term": "納許均衡",
+    "pos": "noun",
+    "tag": "econ"
+  },
+  {
+    "term": "摩爾定律",
+    "pos": "noun",
+    "tag": "tech"
+  },
+  {
+    "term": "梅特卡夫定律",
+    "pos": "noun",
+    "tag": "net"
+  },
+  {
+    "term": "康威定律",
+    "pos": "noun",
+    "tag": "org"
+  },
+  {
+    "term": "古德哈特定律",
+    "pos": "noun",
+    "tag": "econ"
+  },
+  {
+    "term": "帕金森定律",
+    "pos": "noun",
+    "tag": "org"
+  },
+  {
+    "term": "二八法則",
+    "pos": "noun",
+    "tag": "econ"
+  },
+  {
+    "term": "長鞭效應",
+    "pos": "noun",
+    "tag": "supply"
+  },
+  {
+    "term": "辛普森悖論",
+    "pos": "noun",
+    "tag": "stat"
+  },
+  {
+    "term": "觀察者效應",
+    "pos": "noun",
+    "tag": "science"
+  },
+  {
+    "term": "雙系統理論",
+    "pos": "noun",
+    "tag": "psych"
+  },
+  {
+    "term": "安全邊際",
+    "pos": "noun",
+    "tag": "finance"
+  },
+  {
+    "term": "鐵三角",
+    "pos": "noun",
+    "tag": "pm"
+  },
+  {
+    "term": "三體問題",
+    "pos": "noun",
+    "tag": "science"
+  },
+  {
+    "term": "錨定效應",
+    "pos": "noun",
+    "tag": "psych"
+  },
+  {
+    "term": "可得性偏誤",
+    "pos": "noun",
+    "tag": "psych"
+  },
+  {
+    "term": "倖存者偏差",
+    "pos": "noun",
+    "tag": "stat"
+  },
+  {
+    "term": "皮格馬利翁效應",
+    "pos": "noun",
+    "tag": "edu"
+  },
+  {
+    "term": "妥協效應",
+    "pos": "noun",
+    "tag": "psych"
+  },
+  {
+    "term": "島嶼生物地理學",
+    "pos": "noun",
+    "tag": "bio"
+  },
+  {
+    "term": "科斯定理",
+    "pos": "noun",
+    "tag": "law"
+  },
+  {
+    "term": "信號成本理論",
+    "pos": "noun",
+    "tag": "econ"
+  },
+  {
+    "term": "設計壽命",
+    "pos": "noun",
+    "tag": "eng"
+  },
+  {
+    "term": "熱舒適指標",
+    "pos": "noun",
+    "tag": "arch"
+  },
+  {
+    "term": "反向選擇",
+    "pos": "noun",
+    "tag": "econ"
+  },
+  {
+    "term": "資訊不對稱",
+    "pos": "noun",
+    "tag": "econ"
+  },
+  {
+    "term": "邊際效用遞減",
+    "pos": "noun",
+    "tag": "econ"
+  },
+  {
+    "term": "費米悖論",
+    "pos": "noun",
+    "tag": "astro"
+  },
+  {
+    "term": "薛丁格的貓",
+    "pos": "noun",
+    "tag": "science"
+  },
+  {
+    "term": "臨界質量",
+    "pos": "noun",
+    "tag": "phys"
+  },
+  {
+    "term": "臨界點",
+    "pos": "noun",
+    "tag": "phys"
+  },
+  {
+    "term": "相變邊界",
+    "pos": "noun",
+    "tag": "phys"
+  },
+  {
+    "term": "雪崩效應",
+    "pos": "noun",
+    "tag": "phys"
+  },
+  {
+    "term": "連鎖反應",
+    "pos": "noun",
+    "tag": "chem"
+  },
+  {
+    "term": "共振腔",
+    "pos": "noun",
+    "tag": "phys"
+  },
+  {
+    "term": "蝴蝶效應",
+    "pos": "noun",
+    "tag": "chaos"
+  },
+  {
+    "term": "臨界慢化",
+    "pos": "noun",
+    "tag": "phys"
+  },
+  {
+    "term": "熱寂假說",
+    "pos": "noun",
+    "tag": "astro"
+  },
+  {
+    "term": "玻爾茲曼腦",
+    "pos": "noun",
+    "tag": "phys"
+  },
+  {
+    "term": "反饋回路",
+    "pos": "noun",
+    "tag": "systems"
+  },
+  {
+    "term": "雞尾酒會效應",
+    "pos": "noun",
+    "tag": "psych"
+  },
+  {
+    "term": "心智理論",
+    "pos": "noun",
+    "tag": "cog"
+  },
+  {
+    "term": "海馬體",
+    "pos": "noun",
+    "tag": "neuro"
+  },
+  {
+    "term": "遺忘曲線",
+    "pos": "noun",
+    "tag": "psych"
+  },
+  {
+    "term": "細胞自噬",
+    "pos": "noun",
+    "tag": "bio"
+  },
+  {
+    "term": "免疫風暴",
+    "pos": "noun",
+    "tag": "med"
+  },
+  {
+    "term": "布朗運動",
+    "pos": "noun",
+    "tag": "phys"
+  },
+  {
+    "term": "波函數坍縮",
+    "pos": "noun",
+    "tag": "phys"
+  },
+  {
+    "term": "臭氧空洞",
+    "pos": "noun",
+    "tag": "sustain"
+  },
+  {
+    "term": "晶格缺陷",
+    "pos": "noun",
+    "tag": "materials"
+  },
+  {
+    "term": "玻璃轉移",
+    "pos": "noun",
+    "tag": "materials"
+  },
+  {
+    "term": "群體免疫",
+    "pos": "noun",
+    "tag": "med"
+  },
+  {
+    "term": "洋流分岔",
+    "pos": "noun",
+    "tag": "ocean"
+  },
+  {
+    "term": "日冕洞",
+    "pos": "noun",
+    "tag": "astro"
+  },
+  {
+    "term": "日珥爆發",
+    "pos": "noun",
+    "tag": "astro"
+  },
+  {
+    "term": "霓虹雨",
+    "pos": "noun",
+    "tag": "scene"
+  },
+  {
+    "term": "量子指紋",
+    "pos": "noun",
+    "tag": "science"
+  },
+  {
+    "term": "星際郵局",
+    "pos": "noun",
+    "tag": "sci-fi"
+  },
+  {
+    "term": "繁星取樣",
+    "pos": "noun",
+    "tag": "stat"
+  },
+  {
+    "term": "黏菌路網",
+    "pos": "noun",
+    "tag": "bio"
+  },
+  {
+    "term": "鯨落菜單",
+    "pos": "noun",
+    "tag": "nature"
+  },
+  {
+    "term": "地景記憶",
+    "pos": "noun",
+    "tag": "geo"
+  },
+  {
+    "term": "機房冷通道",
+    "pos": "noun",
+    "tag": "tech"
+  },
+  {
+    "term": "菜市場哲學",
+    "pos": "noun",
+    "tag": "philo"
+  },
+  {
+    "term": "元敘事",
+    "pos": "noun",
+    "tag": "philo"
+  },
+  {
+    "term": "碎片化閱讀",
+    "pos": "noun",
+    "tag": "edu"
+  },
+  {
+    "term": "情緒資本",
+    "pos": "noun",
+    "tag": "soc"
+  },
+  {
+    "term": "資料主權",
+    "pos": "noun",
+    "tag": "policy"
+  },
+  {
+    "term": "韌性城市",
+    "pos": "noun",
+    "tag": "city"
+  },
+  {
+    "term": "開放資料樞紐",
+    "pos": "noun",
+    "tag": "data"
+  },
+  {
+    "term": "自動微分",
+    "pos": "noun",
+    "tag": "ai"
+  },
+  {
+    "term": "變分推斷",
+    "pos": "noun",
+    "tag": "stat"
+  },
+  {
+    "term": "蒙地卡羅法",
+    "pos": "noun",
+    "tag": "stat"
+  },
+  {
+    "term": "漂綠偵測",
+    "pos": "noun",
+    "tag": "sustain"
+  },
+{ "term": "內卷", "pos": "noun", "tag": "slang" },
+  { "term": "躺平", "pos": "noun", "tag": "slang" },
+  { "term": "擺爛", "pos": "noun", "tag": "slang" },
+  { "term": "情緒勞動", "pos": "noun", "tag": "soc" },
+  { "term": "情感稅", "pos": "noun", "tag": "soc" },
+  { "term": "社群冷暴力", "pos": "noun", "tag": "soc" },
+  { "term": "共感疲勞", "pos": "noun", "tag": "psych" },
+  { "term": "低欲望社會", "pos": "noun", "tag": "soc" },
+  { "term": "隱私疲勞", "pos": "noun", "tag": "policy" },
+  { "term": "演算法過濾", "pos": "noun", "tag": "ai" },
+  { "term": "算力焦慮", "pos": "noun", "tag": "ai" },
+  { "term": "出圈效應", "pos": "noun", "tag": "media" },
+  { "term": "破圈傳播", "pos": "noun", "tag": "media" },
+  { "term": "人設崩塌", "pos": "noun", "tag": "media" },
+  { "term": "注意力劫持", "pos": "noun", "tag": "media" },
+  { "term": "數位排毒", "pos": "noun", "tag": "life" },
+  { "term": "內容過剩", "pos": "noun", "tag": "media" },
+  { "term": "內容沙漠", "pos": "noun", "tag": "media" },
+  { "term": "迷因經濟", "pos": "noun", "tag": "econ" },
+  { "term": "情緒價值", "pos": "noun", "tag": "soc" },
+  { "term": "好感資本", "pos": "noun", "tag": "soc" },
+  { "term": "口碑飛輪", "pos": "noun", "tag": "biz" },
+  { "term": "機器焦慮", "pos": "noun", "tag": "ai" },
+  { "term": "技術樂觀", "pos": "noun", "tag": "soc" },
+  { "term": "技術悲觀", "pos": "noun", "tag": "soc" },
+  { "term": "數位斷捨離", "pos": "noun", "tag": "life" },
+  { "term": "賽博鄉愁", "pos": "noun", "tag": "culture" },
+  { "term": "網路鄉民學", "pos": "noun", "tag": "culture" },
+  { "term": "演算法透明", "pos": "noun", "tag": "ai" },
+  { "term": "關係倦怠", "pos": "noun", "tag": "soc" },
+  { "term": "社群倦怠", "pos": "noun", "tag": "soc" },
+  { "term": "社會時差", "pos": "noun", "tag": "soc" },
+  { "term": "睡眠債務", "pos": "noun", "tag": "life" },
+  { "term": "藍光暴露", "pos": "noun", "tag": "med" },
+  { "term": "數位足跡", "pos": "noun", "tag": "policy" },
+  { "term": "數位遺產", "pos": "noun", "tag": "policy" },
+  { "term": "數位遺囑", "pos": "noun", "tag": "policy" },
+  { "term": "隱私算帳", "pos": "noun", "tag": "policy" },
+  { "term": "評分通膨", "pos": "noun", "tag": "soc" },
+  { "term": "過度呈現", "pos": "noun", "tag": "media" },
+  { "term": "內容農場", "pos": "noun", "tag": "media" },
+  { "term": "價值共創", "pos": "noun", "tag": "biz" },
+  { "term": "社群共識", "pos": "noun", "tag": "soc" },
+  { "term": "虛假親密", "pos": "noun", "tag": "soc" },
+  { "term": "反向社交", "pos": "noun", "tag": "slang" },
+  { "term": "群體極化", "pos": "noun", "tag": "soc" },
+  { "term": "逆向帶貨", "pos": "noun", "tag": "media" },
+  { "term": "飢餓行銷", "pos": "noun", "tag": "biz" },
+  { "term": "內在驅動", "pos": "noun", "tag": "psych" },
+  { "term": "情緒提款", "pos": "noun", "tag": "psych" },
+  { "term": "情緒破產", "pos": "noun", "tag": "psych" },
+  { "term": "情緒黑洞", "pos": "noun", "tag": "psych" },
+  { "term": "好奇紅利", "pos": "noun", "tag": "soc" },
+  { "term": "注意力稀缺", "pos": "noun", "tag": "media" },
+  { "term": "數據恐慌", "pos": "noun", "tag": "data" },
+  { "term": "共同脆弱", "pos": "noun", "tag": "soc" },
+  { "term": "風險感知", "pos": "noun", "tag": "risk" },
+  { "term": "社會免疫", "pos": "noun", "tag": "soc" },
+  { "term": "文化近視", "pos": "noun", "tag": "culture" },
+  { "term": "世代斷層", "pos": "noun", "tag": "soc" },
+
+  { "term": "引力井", "pos": "noun", "tag": "scene" },
+  { "term": "漩渦街", "pos": "noun", "tag": "phys" },
+  { "term": "邊界層", "pos": "noun", "tag": "phys" },
+  { "term": "風切變", "pos": "noun", "tag": "meteo" },
+  { "term": "雨影效應", "pos": "noun", "tag": "meteo" },
+  { "term": "海市蜃樓", "pos": "noun", "tag": "meteo" },
+  { "term": "霧虹現象", "pos": "noun", "tag": "meteo" },
+  { "term": "地形逆溫", "pos": "noun", "tag": "meteo" },
+  { "term": "斷層階地", "pos": "noun", "tag": "geo" },
+  { "term": "液化帶", "pos": "noun", "tag": "geo" },
+  { "term": "砂丘連弦", "pos": "noun", "tag": "geo" },
+  { "term": "冰楔構造", "pos": "noun", "tag": "geo" },
+  { "term": "熔岩湖", "pos": "noun", "tag": "geo" },
+  { "term": "火山口湖", "pos": "noun", "tag": "geo" },
+  { "term": "岩漿房", "pos": "noun", "tag": "geo" },
+  { "term": "喀斯特漏斗", "pos": "noun", "tag": "geo" },
+  { "term": "天坑群", "pos": "noun", "tag": "geo" },
+  { "term": "石林地貌", "pos": "noun", "tag": "geo" },
+  { "term": "冰河擦痕", "pos": "noun", "tag": "geo" },
+  { "term": "冰磧丘", "pos": "noun", "tag": "geo" },
+  { "term": "海蝕拱", "pos": "noun", "tag": "geo" },
+  { "term": "海蝕柱", "pos": "noun", "tag": "geo" },
+  { "term": "紊流斑塊", "pos": "noun", "tag": "phys" },
+  { "term": "層流滑道", "pos": "noun", "tag": "phys" },
+  { "term": "光柱現象", "pos": "noun", "tag": "meteo" },
+  { "term": "霜花窗", "pos": "noun", "tag": "scene" },
+  { "term": "冰針雨", "pos": "noun", "tag": "meteo" },
+  { "term": "積雨砲塔", "pos": "noun", "tag": "meteo" },
+  { "term": "焰浪震盪", "pos": "noun", "tag": "phys" },
+  { "term": "砂塵暴牆", "pos": "noun", "tag": "meteo" },
+  { "term": "蒸散作用", "pos": "noun", "tag": "ocean" },
+  { "term": "潮汐閘門", "pos": "noun", "tag": "ocean" },
+  { "term": "沿岸上升流", "pos": "noun", "tag": "ocean" },
+  { "term": "溶氧赤字", "pos": "noun", "tag": "ocean" },
+  { "term": "藍綠藻華", "pos": "noun", "tag": "ocean" },
+  { "term": "紅潮爆發", "pos": "noun", "tag": "ocean" },
+  { "term": "海雪沉降", "pos": "noun", "tag": "ocean" },
+  { "term": "內波翻湧", "pos": "noun", "tag": "ocean" },
+  { "term": "河口鹹潮", "pos": "noun", "tag": "ocean" },
+  { "term": "波浪越頂", "pos": "noun", "tag": "ocean" },
+  { "term": "風暴潮", "pos": "noun", "tag": "ocean" },
+  { "term": "引潮力", "pos": "noun", "tag": "ocean" },
+  { "term": "城市熱島", "pos": "noun", "tag": "city" },
+  { "term": "都市冷島", "pos": "noun", "tag": "city" },
+  { "term": "城市風廊", "pos": "noun", "tag": "city" },
+  { "term": "海綿城市", "pos": "noun", "tag": "city" },
+  { "term": "藍綠基礎設施", "pos": "noun", "tag": "city" },
+  { "term": "交通微循環", "pos": "noun", "tag": "city" },
+  { "term": "自行車超道", "pos": "noun", "tag": "city" },
+  { "term": "共享街道", "pos": "noun", "tag": "city" },
+  { "term": "開放街區", "pos": "noun", "tag": "city" },
+  { "term": "立體綠化", "pos": "noun", "tag": "city" },
+  { "term": "模組化建築", "pos": "noun", "tag": "arch" },
+  { "term": "被動式建築", "pos": "noun", "tag": "arch" },
+  { "term": "雙碳建築", "pos": "noun", "tag": "arch" },
+  { "term": "日照權", "pos": "noun", "tag": "policy" },
+  { "term": "雨洪管理", "pos": "noun", "tag": "city" },
+  { "term": "風險地圖", "pos": "noun", "tag": "risk" },
+  { "term": "行星邊界", "pos": "noun", "tag": "sustain" },
+  { "term": "安全營運空間", "pos": "noun", "tag": "sustain" },
+  { "term": "材料護照", "pos": "noun", "tag": "materials" },
+  { "term": "生命週期評估", "pos": "noun", "tag": "sustain" },
+  { "term": "逆物流", "pos": "noun", "tag": "supply" },
+  { "term": "二手循環", "pos": "noun", "tag": "sustain" },
+  { "term": "設計即服務", "pos": "noun", "tag": "biz" },
+  { "term": "風險熱圖", "pos": "noun", "tag": "risk" },
+  { "term": "功能旗標", "pos": "noun", "tag": "ops" },
+  { "term": "錯誤預算", "pos": "noun", "tag": "ops" },
+  { "term": "降級運行", "pos": "noun", "tag": "ops" },
+  { "term": "維保窗口", "pos": "noun", "tag": "ops" },
+  { "term": "觀測代理", "pos": "noun", "tag": "ops" },
+  { "term": "審計軌跡", "pos": "noun", "tag": "ops" },
+  { "term": "版本地獄", "pos": "noun", "tag": "tech" },
+  { "term": "依賴地獄", "pos": "noun", "tag": "tech" },
+  { "term": "指標洩漏", "pos": "noun", "tag": "data" },
+  { "term": "代理指標", "pos": "noun", "tag": "data" },
+  { "term": "配置漂移", "pos": "noun", "tag": "ops" },
+  { "term": "變更審核", "pos": "noun", "tag": "ops" },
+  { "term": "兩段提交", "pos": "noun", "tag": "net" },
+  { "term": "幂等設計", "pos": "noun", "tag": "net" },
+  { "term": "一致性哈希", "pos": "noun", "tag": "net" },
+  { "term": "複製延遲", "pos": "noun", "tag": "net" },
+  { "term": "讀寫分離", "pos": "noun", "tag": "net" },
+  { "term": "影子流量", "pos": "noun", "tag": "ops" },
+  { "term": "壓力測試", "pos": "noun", "tag": "ops" },
+  { "term": "黑盒探測", "pos": "noun", "tag": "ops" },
+  { "term": "金絲雀檢測", "pos": "noun", "tag": "ops" },
+  { "term": "滾動升級", "pos": "noun", "tag": "ops" },
+  { "term": "熱點遷移", "pos": "noun", "tag": "data" },
+  { "term": "冷熱分層", "pos": "noun", "tag": "data" },
+
+  { "term": "柯伊伯帶", "pos": "noun", "tag": "astro" },
+  { "term": "歐特雲", "pos": "noun", "tag": "astro" },
+  { "term": "引力透鏡", "pos": "noun", "tag": "astro" },
+  { "term": "紅移藍移", "pos": "noun", "tag": "astro" },
+  { "term": "宇宙網", "pos": "noun", "tag": "astro" },
+  { "term": "暗物質暈", "pos": "noun", "tag": "astro" },
+  { "term": "暗能量張力", "pos": "noun", "tag": "astro" },
+  { "term": "宇宙暴脹", "pos": "noun", "tag": "astro" },
+  { "term": "黑洞噴流", "pos": "noun", "tag": "astro" },
+  { "term": "吸積盤", "pos": "noun", "tag": "astro" },
+  { "term": "磁重連", "pos": "noun", "tag": "phys" },
+  { "term": "伽瑪暴", "pos": "noun", "tag": "astro" },
+  { "term": "恆星風", "pos": "noun", "tag": "astro" },
+  { "term": "行星遷移", "pos": "noun", "tag": "astro" },
+  { "term": "雙極噴流", "pos": "noun", "tag": "astro" },
+  { "term": "星際介質", "pos": "noun", "tag": "astro" },
+  { "term": "赫羅圖譜", "pos": "noun", "tag": "astro" },
+  { "term": "朗道能級", "pos": "noun", "tag": "phys" },
+  { "term": "拉曼散射", "pos": "noun", "tag": "phys" },
+  { "term": "湯姆遜散射", "pos": "noun", "tag": "phys" },
+  { "term": "量子糾纏", "pos": "noun", "tag": "phys" },
+  { "term": "不確定性原理", "pos": "noun", "tag": "phys" },
+  { "term": "隧穿效應", "pos": "noun", "tag": "phys" },
+  { "term": "約瑟夫森效應", "pos": "noun", "tag": "phys" },
+  { "term": "霍金輻射", "pos": "noun", "tag": "astro" },
+  { "term": "自組織臨界", "pos": "noun", "tag": "phys" },
+  { "term": "亞穩態", "pos": "noun", "tag": "phys" },
+  { "term": "玻色凝聚", "pos": "noun", "tag": "phys" },
+  { "term": "相干長度", "pos": "noun", "tag": "phys" },
+  { "term": "渾沌吸引子", "pos": "noun", "tag": "chaos" },
+  { "term": "李雅普諾夫指數", "pos": "noun", "tag": "chaos" },
+  { "term": "麥克斯韋妖", "pos": "noun", "tag": "phys" },
+  { "term": "吉布斯佯謬", "pos": "noun", "tag": "phys" },
+  { "term": "費米能級", "pos": "noun", "tag": "phys" },
+  { "term": "泡利原理", "pos": "noun", "tag": "phys" },
+  { "term": "毛細作用", "pos": "noun", "tag": "phys" },
+  { "term": "馬蘭戈尼效應", "pos": "noun", "tag": "phys" },
+  { "term": "卡門渦街", "pos": "noun", "tag": "phys" },
+  { "term": "雷諾數", "pos": "noun", "tag": "phys" },
+  { "term": "普朗克尺度", "pos": "noun", "tag": "phys" },
+  { "term": "香農極限", "pos": "noun", "tag": "stat" },
+  { "term": "最大熵原理", "pos": "noun", "tag": "stat" },
+  { "term": "高維詛咒", "pos": "noun", "tag": "stat" },
+  { "term": "帕累托前緣", "pos": "noun", "tag": "econ" },
+  { "term": "反照率", "pos": "noun", "tag": "climate" },
+  { "term": "含水層", "pos": "noun", "tag": "geo" },
+  { "term": "地轉風", "pos": "noun", "tag": "meteo" },
+  { "term": "信風反轉", "pos": "noun", "tag": "meteo" },
+  { "term": "拉尼娜", "pos": "noun", "tag": "meteo" },
+  { "term": "厄爾尼諾", "pos": "noun", "tag": "meteo" },
+  { "term": "震級飽和", "pos": "noun", "tag": "geo" },
+  { "term": "哥白尼原理", "pos": "noun", "tag": "science" },
+  { "term": "反常擴散", "pos": "noun", "tag": "phys" },
+  { "term": "演化穩定策略", "pos": "noun", "tag": "bio" },
+  { "term": "紅皇后假說", "pos": "noun", "tag": "bio" },
+  { "term": "基因漂變", "pos": "noun", "tag": "bio" },
+  { "term": "表觀遺傳", "pos": "noun", "tag": "bio" },
+  { "term": "回音定位", "pos": "noun", "tag": "bio" },
+  { "term": "趨光行為", "pos": "noun", "tag": "bio" },
+  { "term": "趨化行為", "pos": "noun", "tag": "bio" },
+  { "term": "相變滯後", "pos": "noun", "tag": "phys" },
+  { "term": "蠕變變形", "pos": "noun", "tag": "materials" },
+  { "term": "疲勞裂紋", "pos": "noun", "tag": "materials" },
+  { "term": "應變硬化", "pos": "noun", "tag": "materials" },
+  { "term": "殘餘應力", "pos": "noun", "tag": "materials" },
+  { "term": "反射地震", "pos": "noun", "tag": "geo" },
+  { "term": "譜線展寬", "pos": "noun", "tag": "phys" },
+  { "term": "色散關係", "pos": "noun", "tag": "phys" },
+  { "term": "群速度", "pos": "noun", "tag": "phys" },
+  { "term": "相速度", "pos": "noun", "tag": "phys" },
+  { "term": "引力波", "pos": "noun", "tag": "astro" },
+  { "term": "臨界濕度", "pos": "noun", "tag": "meteo" },
+  { "term": "玻璃化時間", "pos": "noun", "tag": "materials" },
+  { "term": "潮汐鎖定", "pos": "noun", "tag": "astro" },
+  { "term": "洛希極限", "pos": "noun", "tag": "astro" },
+  { "term": "本納德對流", "pos": "noun", "tag": "phys" },
+  { "term": "費托合成", "pos": "noun", "tag": "chem" },
+  { "term": "朗肯循環", "pos": "noun", "tag": "eng" },
+  { "term": "卡諾效率", "pos": "noun", "tag": "phys" },
+  { "term": "黏滯阻尼", "pos": "noun", "tag": "phys" },
+
+  { "term": "奧卡姆剃刀", "pos": "noun", "tag": "philo" },
+  { "term": "墨菲定律", "pos": "noun", "tag": "risk" },
+  { "term": "彼得原理", "pos": "noun", "tag": "org" },
+  { "term": "破壞式創新", "pos": "noun", "tag": "biz" },
+  { "term": "創新擴散", "pos": "noun", "tag": "biz" },
+  { "term": "早期採用者", "pos": "noun", "tag": "biz" },
+  { "term": "技術採納曲線", "pos": "noun", "tag": "biz" },
+  { "term": "價值主張畫布", "pos": "noun", "tag": "biz" },
+  { "term": "商業模式畫布", "pos": "noun", "tag": "biz" },
+  { "term": "精實創業", "pos": "noun", "tag": "biz" },
+  { "term": "最小可行產品", "pos": "noun", "tag": "biz" },
+  { "term": "商品化陷阱", "pos": "noun", "tag": "econ" },
+  { "term": "定錨定價", "pos": "noun", "tag": "econ" },
+  { "term": "多邊平台", "pos": "noun", "tag": "econ" },
+  { "term": "巴賽爾協定", "pos": "noun", "tag": "finance" },
+  { "term": "尾部風險", "pos": "noun", "tag": "risk" },
+  { "term": "公地悲劇", "pos": "noun", "tag": "econ" },
+  { "term": "激勵相容", "pos": "noun", "tag": "econ" },
+  { "term": "阿羅不可能定理", "pos": "noun", "tag": "econ" },
+  { "term": "赫希曼退出", "pos": "noun", "tag": "econ" },
+  { "term": "委託代理問題", "pos": "noun", "tag": "econ" },
+  { "term": "多邊治理", "pos": "noun", "tag": "policy" },
+  { "term": "交易成本", "pos": "noun", "tag": "econ" },
+  { "term": "路徑依賴", "pos": "noun", "tag": "theory" },
+  { "term": "區位優勢", "pos": "noun", "tag": "econ" },
+  { "term": "協調失靈", "pos": "noun", "tag": "econ" },
+  { "term": "社會資本", "pos": "noun", "tag": "soc" },
+  { "term": "弱連結理論", "pos": "noun", "tag": "soc" },
+  { "term": "小世界網路", "pos": "noun", "tag": "net" },
+  { "term": "無尺度網路", "pos": "noun", "tag": "net" },
+  { "term": "結構洞", "pos": "noun", "tag": "soc" },
+  { "term": "回音室效應", "pos": "noun", "tag": "soc" },
+  { "term": "旁觀者效應", "pos": "noun", "tag": "psych" },
+  { "term": "從眾效應", "pos": "noun", "tag": "psych" },
+  { "term": "光環效應", "pos": "noun", "tag": "psych" },
+  { "term": "框架效應", "pos": "noun", "tag": "psych" },
+  { "term": "損失趨避", "pos": "noun", "tag": "psych" },
+  { "term": "沉沒成本", "pos": "noun", "tag": "econ" },
+  { "term": "心理帳戶", "pos": "noun", "tag": "psych" },
+  { "term": "達克效應", "pos": "noun", "tag": "psych" },
+  { "term": "基本歸因錯誤", "pos": "noun", "tag": "psych" },
+  { "term": "自利偏誤", "pos": "noun", "tag": "psych" },
+  { "term": "代表性偏誤", "pos": "noun", "tag": "psych" },
+  { "term": "事後偏誤", "pos": "noun", "tag": "psych" },
+  { "term": "現狀偏好", "pos": "noun", "tag": "psych" },
+  { "term": "時間貼現", "pos": "noun", "tag": "psych" },
+  { "term": "狄德羅效應", "pos": "noun", "tag": "psych" },
+  { "term": "巴納姆效應", "pos": "noun", "tag": "psych" },
+  { "term": "鴨子測試", "pos": "noun", "tag": "logic" },
+  { "term": "破窗效應", "pos": "noun", "tag": "soc" },
+  { "term": "契約理論", "pos": "noun", "tag": "econ" },
+  { "term": "機制設計", "pos": "noun", "tag": "econ" },
+  { "term": "社會選擇", "pos": "noun", "tag": "econ" },
+  { "term": "展望理論", "pos": "noun", "tag": "econ" },
+  { "term": "參考點依賴", "pos": "noun", "tag": "econ" },
+  { "term": "囚徒困境", "pos": "noun", "tag": "econ" },
+  { "term": "帕斯卡賭注", "pos": "noun", "tag": "philo" },
+  { "term": "零和博弈", "pos": "noun", "tag": "econ" },
+  { "term": "正和博弈", "pos": "noun", "tag": "econ" },
+  { "term": "重複賽局", "pos": "noun", "tag": "econ" },
+  { "term": "焦點解", "pos": "noun", "tag": "econ" },
+  { "term": "反身性理論", "pos": "noun", "tag": "finance" },
+  { "term": "哥德爾不完備", "pos": "noun", "tag": "logic" },
+  { "term": "停機問題", "pos": "noun", "tag": "cs" },
+  { "term": "圖靈完備", "pos": "noun", "tag": "cs" },
+  { "term": "範疇論", "pos": "noun", "tag": "math" },
+  { "term": "述詞邏輯", "pos": "noun", "tag": "logic" },
+  { "term": "形式驗證", "pos": "noun", "tag": "cs" },
+  { "term": "抽象解釋", "pos": "noun", "tag": "cs" },
+  { "term": "可滿足性", "pos": "noun", "tag": "logic" },
+  { "term": "熱力學第一定律", "pos": "noun", "tag": "phys" },
+  { "term": "熱力學第二定律", "pos": "noun", "tag": "phys" },
+  { "term": "熱力學第三定律", "pos": "noun", "tag": "phys" },  
+  { "term": "慣性定律", "pos": "noun", "tag": "phys" },
+  { "term": "白努力定律", "pos": "noun", "tag": "phys" },
+  { "term": "莫非定理", "pos": "noun", "tag": "psych" },
+  { "term": "曼德拉效應", "pos": "noun", "tag": "psych" },
+  { "term": "冷水煮青蛙", "pos": "noun", "tag": "psych" },
+  { "term": "鯰魚效應", "pos": "noun", "tag": "psych" }
+]
