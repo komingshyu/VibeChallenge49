@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200" viewBox="0 0 320 200">
+<rect x="1" y="1" width="318" height="198" fill="white" stroke="#e0e0e0"/>
+<text x="160.0" y="24" font-family="system-ui, -apple-system, Segoe UI, Noto Sans CJK TC, Microsoft JhengHei, PingFang TC, sans-serif" font-size="16" font-weight="700" fill="#333" text-anchor="middle">錘子線（Hammer）</text>
+<line x1="20" y1="50" x2="300" y2="50" stroke="#ddd" stroke-width="1" stroke-dasharray="4,4" />
+<line x1="20" y1="90" x2="300" y2="90" stroke="#ddd" stroke-width="1" stroke-dasharray="4,4" />
+<line x1="20" y1="130" x2="300" y2="130" stroke="#ddd" stroke-width="1" stroke-dasharray="4,4" />
+<line x1="20" y1="170" x2="300" y2="170" stroke="#ddd" stroke-width="1" stroke-dasharray="4,4" />
+<line x1="160.0" y1="105" x2="160.0" y2="170" stroke="#d32f2f" stroke-width="2"/><rect x="153.0" y="110" width="14" height="2" fill="#d32f2f" stroke="#d32f2f"/>
+<text x="24" y="190" font-family="system-ui, -apple-system, Segoe UI, Noto Sans CJK TC, Microsoft JhengHei, PingFang TC, sans-serif" font-size="12" font-weight="400" fill="#333" text-anchor="start">長下影 + 小實體：若在低檔區屬止跌訊號（非單獨買訊）。</text>
+</svg>
