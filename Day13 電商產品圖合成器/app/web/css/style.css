@@ -1,0 +1,90 @@
+:root{--ring:62 100% 50%}
+*{box-sizing:border-box}
+
+/* ---- Tabs ---- */
+.tab-btn{padding:.5rem 1rem;border-radius:9999px;border:1px solid rgba(0,0,0,.07);background:#f8fafc;font-weight:600}
+.tab-btn.active{background:linear-gradient(to right,#e0f2fe,#e6fffa);color:#0c4a6e;border-color:#bae6fd}
+.tab-panel{}
+
+/* ---- Inputs / Buttons ---- */
+.file-input,.input,.select,.textarea{width:100%;padding:.6rem .8rem;border:1px solid #e2e8f0;border-radius:.75rem;background:#fff;outline:none}
+.textarea{resize:vertical}
+.btn-primary{background:#0ea5e9;color:#fff;font-weight:700;padding:.6rem 1rem;border-radius:.75rem}
+.btn-primary:hover{filter:brightness(.95)}
+.btn-secondary{background:#e2e8f0;color:#0f172a;font-weight:700;padding:.6rem 1rem;border-radius:.75rem}
+
+.link{color:#0284c7}
+
+/* ---- Preview card ---- */
+.preview-card{
+  position:relative;
+  min-height:360px;
+  border:1px dashed #cbd5e1;
+  border-radius:1rem;
+  background:repeating-linear-gradient(-45deg,#f8fafc,#f8fafc 10px,#f1f5f9 10px,#f1f5f9 20px);
+  overflow:hidden;
+}
+
+/* 讓舞台永遠鋪滿父層，避免高度為 0 */
+.preview-card .stage{
+  position:absolute;
+  inset:0;                  /* top/right/bottom/left 全貼齊 */
+  padding:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* 最新影像覆蓋舊圖；以 contain 呈現，保持比例 */
+.preview-card .stage img.layer{
+  position:absolute;
+  inset:12px;                               /* 與邊緣留白一致 */
+  width:calc(100% - 24px);
+  height:calc(100% - 24px);
+  object-fit:contain;
+  border-radius:.75rem;
+  box-shadow:0 10px 30px rgba(0,0,0,.07);
+  z-index:1;
+}
+
+/* 中央 loading 指示（直到新圖載入才移除） */
+.preview-card .center{
+  position:absolute;
+  top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  display:flex;
+  align-items:center;
+  gap:10px;
+  z-index:3;
+  color:#475569;
+  background:rgba(255,255,255,.65);
+  padding:8px 12px;
+  border-radius:9999px;
+  backdrop-filter:blur(4px);
+}
+
+/* 進度條固定在底部，不會被圖片遮住 */
+.progress{
+  position:absolute;
+  left:12px; right:12px; bottom:12px;
+  height:6px;
+  background:#e2e8f0;
+  border-radius:9999px;
+  overflow:hidden;
+  z-index:5;
+  pointer-events:none;
+}
+.progress>div{
+  height:100%;
+  width:0%;
+  background:#0ea5e9;
+  transition:width .3s ease;
+}
+
+/* Loader */
+.loader{width:28px;height:28px;border:3px solid #e2e8f0;border-top-color:#0ea5e9;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Fade-in for new layers */
+.fade-in{animation:fadeIn .45s ease both}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}

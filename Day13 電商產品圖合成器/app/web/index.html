@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>電商產品圖合成器｜GPT‑4o + Responses API</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body class="min-h-screen bg-gradient-to-b from-white to-sky-50 text-slate-800">
+  <header class="sticky top-0 z-10 backdrop-blur bg-white/80 border-b">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <h1 class="text-xl md:text-2xl font-bold tracking-tight">電商產品圖合成器 <span class="text-sky-600">GPT‑4o</span></h1>
+      <a class="text-sm text-sky-700 hover:underline" href="#docs">文件 / 說明</a>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-8 space-y-10">
+    <div class="bg-white rounded-2xl shadow p-4">
+      <div class="flex gap-2 mb-4">
+        <button class="tab-btn active" data-tab="scene">場景變化</button>
+        <button class="tab-btn" data-tab="person">人物合成</button>
+        <button class="tab-btn" data-tab="upscale">解析度提升</button>
+        <button class="tab-btn" data-tab="batch">批次處理</button>
+      </div>
+
+      <!-- Scene Edit -->
+      <section id="tab-scene" class="tab-panel">
+        <form id="form-scene" class="grid gap-4 md:grid-cols-2">
+          <div class="space-y-3">
+            <label class="block font-semibold">產品圖</label>
+            <input type="file" name="product" accept="image/*" required class="file-input" />
+            <label class="block font-semibold">場景描述</label>
+            <textarea name="prompt" class="textarea" rows="5" placeholder="例如：讓一個台灣年輕美女拿著他喝熱飲，陽光柔和、木質桌面、清晨氛圍。" required></textarea>
+            <div class="grid grid-cols-2 gap-3">
+              <label class="inline-flex items-center gap-2">
+                <input type="checkbox" name="upscale_after" />
+                <span>完成後自動 4× 放大</span>
+              </label>
+              <label class="inline-flex items-center gap-2">
+                <input type="checkbox" name="stream_preview" checked />
+                <span>逐步預覽（流式）</span>
+              </label>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium">Partial images</label>
+                <input type="number" name="partial_images" value="3" min="1" max="6" class="input" />
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button class="btn-primary" type="submit">生成</button>
+              <button class="btn-secondary" type="reset">清除</button>
+            </div>
+          </div>
+          <div class="space-y-3">
+            <div id="scene-preview" class="preview-card"></div>
+          </div>
+        </form>
+      </section>
+
+      <!-- Person Composite -->
+      <section id="tab-person" class="tab-panel hidden">
+        <form id="form-person" class="grid gap-4 md:grid-cols-2">
+          <div class="space-y-3">
+            <label class="block font-semibold">產品圖</label>
+            <input type="file" name="product" accept="image/*" required class="file-input" />
+            <label class="block font-semibold">人物照片</label>
+            <input type="file" name="person" accept="image/*" required class="file-input" />
+            <label class="block font-semibold">合成指令 / 動作</label>
+            <textarea name="prompt" class="textarea" rows="5" placeholder="例如：該人物坐在桌邊用雙手握著杯子，輕鬆微笑看向鏡頭。"></textarea>
+            <div class="grid grid-cols-2 gap-3">
+              <label class="inline-flex items-center gap-2">
+                <input type="checkbox" name="confirm_consent" />
+                <span>我已取得人物肖像使用授權</span>
+              </label>
+              <label class="inline-flex items-center gap-2">
+                <input type="checkbox" name="stream_preview" checked />
+                <span>逐步預覽（流式）</span>
+              </label>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <label class="inline-flex items-center gap-2">
+                <input type="checkbox" name="upscale_after" />
+                <span>完成後自動 4× 放大</span>
+              </label>
+              <div>
+                <label class="block text-sm font-medium">Partial images</label>
+                <input type="number" name="partial_images" value="2" min="1" max="6" class="input" />
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button class="btn-primary" type="submit">生成</button>
+              <button class="btn-secondary" type="reset">清除</button>
+            </div>
+          </div>
+          <div class="space-y-3">
+            <div id="person-preview" class="preview-card"></div>
+          </div>
+        </form>
+      </section>
+
+      <!-- Upscale -->
+      <section id="tab-upscale" class="tab-panel hidden">
+        <form id="form-upscale" class="grid gap-4 md:grid-cols-2">
+          <div class="space-y-3">
+            <label class="block font-semibold">上傳圖片</label>
+            <input type="file" name="image" accept="image/*" required class="file-input" />
+            <div class="flex gap-2">
+              <button class="btn-primary" type="submit">開始放大 (x4)</button>
+              <button class="btn-secondary" type="reset">清除</button>
+            </div>
+          </div>
+          <div class="space-y-3">
+            <div id="upscale-preview" class="preview-card"></div>
+          </div>
+        </form>
+      </section>
+
+      <!-- Batch -->
+      <section id="tab-batch" class="tab-panel hidden">
+        <form id="form-batch" class="grid gap-4 md:grid-cols-2">
+          <div class="space-y-3">
+            <label class="block font-semibold">模式</label>
+            <select name="mode" class="select">
+              <option value="scene">場景變化</option>
+              <option value="person">人物合成</option>
+            </select>
+
+            <label class="block font-semibold">選擇資料夾（產品圖）</label>
+            <input type="file" name="files" webkitdirectory directory multiple class="file-input" />
+
+            <div id="person-for-batch" class="hidden">
+              <label class="block font-semibold">（選）人物照片（套用到全部）</label>
+              <input type="file" name="person" accept="image/*" class="file-input" />
+              <label class="inline-flex items-center gap-2 mt-2">
+                <input type="checkbox" name="confirm_consent" />
+                <span>我已取得人物肖像使用授權</span>
+              </label>
+            </div>
+
+            <label class="block font-semibold">指令 / 場景描述</label>
+            <textarea name="prompt" class="textarea" rows="4" placeholder="同一敘述會套用到整個資料夾。"></textarea>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium">Max concurrency</label>
+                <input type="number" name="max_concurrency" value="2" class="input" min="1" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium">Min interval (ms)</label>
+                <input type="number" name="min_interval_ms" value="300" class="input" min="0" />
+              </div>
+            </div>
+
+            <label class="inline-flex items-center gap-2 mt-2">
+              <input type="checkbox" name="upscale_after" />
+              <span>完成後自動 4× 放大</span>
+            </label>
+
+            <div class="flex gap-2">
+              <button class="btn-primary" type="submit">開始批次</button>
+              <button class="btn-secondary" type="reset">清除</button>
+            </div>
+          </div>
+          <div class="space-y-3">
+            <div id="batch-log" class="preview-card max-h-[540px] overflow-auto text-sm"></div>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <section id="docs" class="prose max-w-none bg-white rounded-2xl shadow p-6">
+      <h2>文件 / 說明</h2>
+      <ul>
+        <li><strong>使用 GPT‑4o + Responses API 生圖（含編輯）</strong>：以 <code>tools: [{"type":"image_generation"}]</code> 呼叫，可配合 <code>partial_images</code> 取得逐步影像。</li>
+        <li><strong>上下文生成</strong>：以 Responses API 的多輪互動模式為核心。</li>
+        <li><strong>參考文件</strong>：
+          <ul class="text-sm">
+            <li><a class="link" href="https://platform.openai.com/docs/guides/images-vision" target="_blank">Images &amp; Vision</a></li>
+            <li><a class="link" href="https://platform.openai.com/docs/api-reference/responses" target="_blank">Responses API 參考</a></li>
+            <li><a class="link" href="https://platform.openai.com/docs/guides/rate-limits" target="_blank">Rate limits</a></li>
+          </ul>
+        </li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="border-t py-6 text-center text-sm text-slate-500">
+    <p>© 2025 Ecom Image Composer • MIT</p>
+  </footer>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
