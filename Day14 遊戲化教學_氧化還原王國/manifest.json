@@ -1,0 +1,26 @@
+{
+  "name": "氧化還原王國 · Redox Kingdom",
+  "short_name": "氧化還原王國",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#0e1b2e",
+  "icons": [
+    {
+      "src": "assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
