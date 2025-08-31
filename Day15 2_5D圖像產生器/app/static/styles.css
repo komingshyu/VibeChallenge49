@@ -1,0 +1,90 @@
+/* 佈景 */
+:root { color-scheme: dark; }
+body {
+  margin: 0; padding: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Noto Sans, "Helvetica Neue", Arial;
+  background: #0f1115; color: #eaeef2;
+}
+header { padding: 16px 20px; border-bottom: 1px solid #1d2230; }
+h1 { margin: 0 0 4px; }
+main.layout { display: grid; grid-template-columns: 380px 1fr; gap: 16px; padding: 16px; }
+.card { background: #121622; border: 1px solid #1d2230; border-radius: 12px; padding: 12px; }
+.status { margin-top: 8px; opacity: .9; }
+figure { margin: 0; }
+figcaption { font-size: 12px; opacity: .8; margin: 4px 0 6px; }
+img { width: 100%; height: auto; display: block; border-radius: 8px; background: #0b0e16; }
+
+.grid { display: grid; gap: 10px; }
+.grid-2 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+.grid-3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
+
+.workspace .card:first-child { position: sticky; top: 12px; }
+
+/* 視差舞台 */
+.frame { background: #0b0e16; border: 1px solid #1d2230; border-radius: 12px; padding: 10px; margin-bottom: 12px; }
+#viewer-outer { position: relative; width: 100%; aspect-ratio: 16/9; perspective: 1000px; overflow: hidden; border-radius: 10px; }
+#viewer-tilt { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform 220ms ease-out; }
+
+#viewer.scene { position: absolute; inset: 0; }
+
+.layer { position:absolute; inset:0; pointer-events:none; will-change:transform; }
+.fg-layer { z-index: 10; }
+.bg-layer { z-index: 0; }
+
+
+.bg-img   { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: transparent; }
+.fg-wrap  { position: absolute; inset: 0; transform: translateZ(0) scale(var(--scale,1)); transform-origin: center; }
+.fg-img   { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: transparent !important; }
+.fg-img.feather { filter: blur(var(--feather-blur,4px)); opacity: var(--feather-opacity,.35); }
+.fg-img.crisp   { filter: drop-shadow(0 0 5px rgba(0,0,0,.18)); }
+
+.hint { margin-top: 8px; font-size: 12px; opacity: .7; }
+
+/* 前景輸出 Grid */
+.fg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+.fg-grid .fg-item { text-align: center; }
+.fg-grid img { width: 100%; max-width: 140px; border: 1px solid #1d2230; background: #0b0e16; padding: 4px; border-radius: 8px; }
+.fg-grid .label { display: block; margin-top: 4px; font-size: 12px; opacity: .8; }
+
+/* Busy Indicator */
+#busy-indicator {
+  position: fixed; top: 14px; right: 14px;
+  background: rgba(0,0,0,0.7); color: #fff;
+  padding: 8px 12px; border-radius: 8px; display: none;
+  align-items: center; gap: 8px; z-index: 9999;
+}
+.spinner {
+  width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.25);
+  border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+
+/* 前景層級統一提高，背景不再用 layer 呈現 */
+.layer { position:absolute; inset:0; pointer-events:none; will-change:transform; }
+.fg-layer { z-index: 10; }
+
+/* 其他保持不變 */
+.bg-img   { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; background:transparent; }
+.fg-wrap  { position:absolute; inset:0; transform:translateZ(0) scale(var(--scale,1)); transform-origin:center; }
+.fg-img   { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; background:transparent !important; }
+.fg-img.feather { filter: blur(var(--feather-blur,4px)); opacity: var(--feather-opacity,.35); }
+.fg-img.crisp   { filter: drop-shadow(0 0 5px rgba(0,0,0,.18)); }
+
+
+
+
+
+.fg-wrap  { position:absolute; inset:0; transform:translateZ(0) scale(var(--scale,1)); transform-origin:center; }
+.fg-img   { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; background:transparent !important; }
+.fg-img.feather { filter: blur(4px); opacity: .35; } /* feather 數值交由 JS 覆蓋 */
+.fg-img.crisp   { filter: drop-shadow(0 0 5px rgba(0,0,0,.18)); }
+
+/* Busy indicator（若尚未加） */
+#busy-indicator{position:fixed;top:14px;right:14px;background:rgba(0,0,0,.7);color:#fff;padding:8px 12px;border-radius:8px;display:none;align-items:center;gap:8px;z-index:9999}
+.spinner{width:18px;height:18px;border:3px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
