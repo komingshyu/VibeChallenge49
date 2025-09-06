@@ -1,0 +1,10 @@
+{
+  "key": "pattern_break",
+  "name": "模式一破格",
+  "category": "視覺敘事",
+  "age_hint": "3–6",
+  "description": "維持規律（構圖/色調/鏡頭距離），高峰時跨頁大圖打破規則。",
+  "skeleton": {
+    "visual": "維持規律→第N+1頁破格翻轉→笑點或驚喜"
+  }
+}

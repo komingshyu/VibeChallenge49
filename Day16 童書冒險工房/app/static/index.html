@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Story Adventure Studio</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+  <nav class="topbar" role="navigation" aria-label="分頁選單">
+    <div class="brand">
+      <img src="/static/assets/logo.svg" alt="" class="logo">
+      <span style="color: #eeeeee">童書冒險工坊</span>
+    </div>
+    <ul id="tabs" class="tabs" role="tablist" aria-label="步驟切換">
+      <li id="tab-1" role="tab" aria-selected="true" tabindex="0" data-i="0" class="active">① 套路</li>
+      <li id="tab-2" role="tab" aria-selected="false" tabindex="-1" data-i="1">② 差異</li>
+      <li id="tab-3" role="tab" aria-selected="false" tabindex="-1" data-i="2">③ 選角</li>
+      <li id="tab-4" role="tab" aria-selected="false" tabindex="-1" data-i="3">④ 分鏡</li>
+      <li id="tab-5" role="tab" aria-selected="false" tabindex="-1" data-i="4">⑤ 產製</li>
+    </ul>
+  </nav>
+
+  <div id="viewport" class="viewport" aria-live="polite">
+    <div id="rail" class="rail">
+
+      <!-- Panel 1：選套路 -->
+      <section class="panel" id="panel-1" aria-labelledby="tab-1">
+        <div class="panel-inner">
+          <h2>① 選擇套路</h2>
+          <div id="template-list" class="grid"></div>
+        </div>
+      </section>
+
+        <!-- Panel 2：差異化 + 三路串流 -->
+        <section class="panel" id="panel-2" aria-labelledby="tab-2">
+            <div class="panel-inner">
+                <h2>② 輸入差異化資訊</h2>
+
+                <form id="diff-form" class="grid grid-form">
+                    <label>主題/寓意
+                        <input name="theme" value="每個人都有自己的勇敢"/>
+                    </label>
+                    <label>場景/文化元素
+                        <input name="setting" value="海邊小鎮／新生第一天"/>
+                    </label>
+                    <label>年齡層
+                        <input name="age_range" value="3-6"/>
+                    </label>
+                    <label>語氣
+                        <input name="tone" value="溫暖幽默"/>
+                    </label>
+                    <label>語言套路（逗號分隔）
+                        <input name="language_tricks" value="Refrain, Rule of Three"/>
+                    </label>
+                    <label>視覺套路（逗號分隔）
+                        <input name="visual_tricks" value="翻頁鉤子, 模式一破格, 色彩漸變"/>
+                    </label>
+                </form>
+
+                <div class="actions">
+                    <button id="btn-stream" class="primary">同時串流生成 3 組大綱</button>
+                </div>
+
+                <div class="columns">
+                    <div class="outline-card" id="cardA">
+                        <div class="status" id="stA">尚未生成</div>
+                        <h4 class="outline-title" id="tA">大綱 A</h4>
+                        <p class="outline-logline" id="lA"></p>
+                        <p class="outline-cast" id="cA"></p> <!-- 新增：顯示角色清單 -->
+                        <div class="card-actions">
+                            <button id="useA" disabled>選用此大綱（帶入角色）</button>
+                        </div>
+                    </div>
+
+                    <div class="outline-card" id="cardB">
+                        <div class="status" id="stB">尚未生成</div>
+                        <h4 class="outline-title" id="tB">大綱 B</h4>
+                        <p class="outline-logline" id="lB"></p>
+                        <p class="outline-cast" id="cB"></p> <!-- 新增 -->
+                        <div class="card-actions">
+                            <button id="useB" disabled>選用此大綱（帶入角色）</button>
+                        </div>
+                    </div>
+
+                    <div class="outline-card" id="cardC">
+                        <div class="status" id="stC">尚未生成</div>
+                        <h4 class="outline-title" id="tC">大綱 C</h4>
+                        <p class="outline-logline" id="lC"></p>
+                        <p class="outline-cast" id="cC"></p> <!-- 新增 -->
+                        <div class="card-actions">
+                            <button id="useC" disabled>選用此大綱（帶入角色）</button>
+                        </div>
+                    </div>
+
+                    <!-- 這一行保持原樣，但我們已用 CSS .outlines 隱藏 -->
+                    <div id="outlines" class="grid outlines" aria-live="polite"></div>
+                </div> <!-- ✅ 補上這行，關閉 .columns -->
+            </div>
+        </section>
+
+
+        <!-- Panel 3：選角定裝 + 全書美學風格 -->
+      <section class="panel" id="panel-3" aria-labelledby="tab-3">
+        <div class="panel-inner">
+          <h2>③ 選角定裝（@角色名稱）</h2>
+
+          <div class="style-guide">
+            <label>全書美學風格（統一畫風 / 色盤 / 光線 / 質感）
+              <input id="art-style" placeholder="例：手繪水彩＋柔和色彩＋紙張質感；固定光源；圓角造型；乾淨背景" />
+            </label>
+            <button id="style-save">儲存風格</button>
+          </div>
+
+          <div id="characters" class="grid"></div>
+
+          <div class="char-form">
+            <input id="char-name" placeholder="角色名稱（可加 @）" />
+            <input id="char-role" placeholder="定位: 主角/搭檔/反派" />
+            <input id="char-desc" placeholder="性格&背景" />
+            <textarea id="char-look" placeholder="外觀建議/生圖提示"></textarea>
+            <button id="char-add">新增角色</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 4：14 跨頁分鏡（可依意見重寫） -->
+      <section class="panel" id="panel-4" aria-labelledby="tab-4">
+        <div class="panel-inner">
+          <h2>④ 生成 14 跨頁分鏡</h2>
+          <div class="actions">
+            <button id="build-sb" class="primary">由已選大綱＋角色 → 分鏡</button>
+          </div>
+
+          <div class="notes">
+            <textarea id="sb-notes" rows="3" placeholder="在這輸入你的意見，例如：第4頁改夜景；多放 @小魚 與 @老鴨 的互動；反派只露遠景，不要太可怕。"></textarea>
+            <button id="rewrite-sb">套用意見重寫分鏡</button>
+          </div>
+
+          <div id="storyboard" class="sb-list"></div>
+        </div>
+      </section>
+
+      <!-- Panel 5：產製（圖像 / TTS / 匯出） -->
+      <section class="panel" id="panel-5" aria-labelledby="tab-5">
+  <div class="panel-inner">
+    <h2>⑤ 生成圖像 / 旁白 TTS / 影片</h2>
+
+    <!-- 全域批次控制（依附件設計） -->
+<div class="sas-cards-header">
+  <div class="global-controls">
+    <button id="btn-batch-img" class="btn-global">批次生成圖像</button>
+    <button id="btn-batch-tts" class="btn-global">批次生成旁白</button>
+
+    <!-- 新增：全域 TTS 聲線 -->
+    <label class="voice-setting">旁白聲線
+      <select id="tts-voice">
+        <option value="alloy">alloy</option>
+        <option value="aria">aria</option>
+        <option value="coral">coral</option>
+        <option value="sage">sage</option>
+        <option value="verse">verse</option>
+      </select>
+    </label>
+    <button id="btn-save-voice" class="btn-global">儲存聲線</button>
+  </div>
+</div>
+
+    <!-- 卡片容器：每一頁一張卡 -->
+      <div id="pages"  class="cards-container" aria-live="polite"></div>
+     <div class="exports" style="margin-top:14px">
+      <a id="dl-pdf" class="btn">匯出 PDF</a>
+      <a id="dl-epub" class="btn">匯出 ePub</a>
+      <a id="dl-mp4" class="btn">匯出 MP4</a>
+    </div>
+  </div>
+</section>
+
+    </div>
+  </div>
+
+  <button class="nav-btn prev" aria-label="上一頁">‹</button>
+  <button class="nav-btn next" aria-label="下一頁">›</button>
+  <div class="footer-floating">© 2025 Story Adventure Studio</div>
+
+<script src="/static/app.js?v=fix-20250904" defer></script>
+</body>
+</html>
