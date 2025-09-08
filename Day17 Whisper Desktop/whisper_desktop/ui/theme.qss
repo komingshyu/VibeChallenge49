@@ -1,0 +1,16 @@
+QWidget { background: #FAFAFA; color: #111; font-family: "Segoe UI", "Noto Sans CJK TC", "PingFang TC"; }
+QPushButton { background: #1E88E5; color: white; border: none; padding: 8px 14px; border-radius: 6px; }
+QPushButton:hover { background: #1976D2; }
+QPushButton:disabled { background: #B0BEC5; }
+QLineEdit, QComboBox, QTextEdit { background: #FFFFFF; border: 1px solid #E0E0E0; padding: 6px; border-radius: 6px; }
+QProgressBar { border: 1px solid #E0E0E0; border-radius: 6px; text-align: center; }
+QProgressBar::chunk { background-color: #43A047; }
+QTabWidget::pane { border: 1px solid #E0E0E0; }
+QTabBar::tab { padding: 10px 16px; }
+QTabBar::tab:selected { color: #1E88E5; }
+QCheckBox::indicator { width: 16px; height: 16px; border: 2px solid #111; border-radius: 3px; background: #FFF; }
+QCheckBox::indicator:checked { background: #111; border: 2px solid #111; }
+QCheckBox { spacing: 6px; }
+QListWidget { background: #FFFFFF; border: 1px solid #E0E0E0; border-radius: 6px; }
+QTableWidget { background: #FFFFFF; border: 1px solid #E0E0E0; border-radius: 6px; gridline-color: #EEE; }
+QHeaderView::section { background: #F2F2F2; border: 1px solid #E0E0E0; padding: 4px; }
