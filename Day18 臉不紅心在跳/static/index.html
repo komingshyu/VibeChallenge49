@@ -1,0 +1,90 @@
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>臉不紅心在跳</title>
+  <link rel="stylesheet" href="/static/styles.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/GLTFLoader.js"></script>
+</head>
+<body>
+  <div id="app">
+
+    <header>
+      <h1>臉不紅心在跳</h1>
+      <div class="subtitle">用相機/影片遠端推斷心率（rPPG）</div>
+    </header>
+
+    <main id="main">
+
+      <section id="left-panel">
+        <div class="cards tall">
+          <div class="video-container">
+            <video id="video" autoplay playsinline muted></video>
+            <canvas id="canvasOverlay"></canvas>
+            <div id="previewPlaceholder" class="placeholder">相機畫面或影片預覽</div>
+          </div>
+          <div class="controls">
+            <button id="btnCam">開啟攝影機</button>
+            <input type="file" id="fileInput" accept="video/*"/>
+            <button id="btnStop">停止</button>
+            <input type="checkbox" id="chkCrop"><label for="chkCrop">聚焦臉部裁切</label>
+            <label>縮放</label><input type="range" id="zoomRange" min="1.0" max="2.5" step="0.1" value="1.4">
+            <div class="progress" style="flex:1;">
+              <div class="bar" id="progressBar"></div>
+            </div>
+          </div>
+          <div class="seekbar" id="seekBarWrap" style="display:none;">
+            <input type="range" id="seekRange" min="0" max="100" step="0.01" value="0">
+            <div class="time" id="timeLabel">00:00 / 00:00</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="right-panel">
+        <div class="cards">
+          <h3>即時心率</h3>
+          <div class="bpm-display">
+            <div id="bpmValue">--</div>
+            <div class="bpm-unit">BPM</div>
+            <div id="confidenceLabel">conf: --</div>
+          </div>
+        </div>
+
+        <div class="cards">
+          <h3>訊號波形</h3>
+          <canvas id="signalChart"></canvas>
+        </div>
+
+        <div class="cards">
+          <h3>科幻心臟</h3>
+          <div id="heart3d"></div>
+        </div>
+
+        <div class="cards">
+          <h3>量測紀錄</h3>
+          <div class="crud">
+            <div class="crud-row">
+              <input id="recordName" placeholder="紀錄名稱"/>
+              <input id="recordNotes" placeholder="備註"/>
+              <button id="btnAddRecord">新增紀錄</button>
+            </div>
+            <div id="recordList"></div>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+
+    <footer>
+      <div>⚠️ 非醫療用途。影片品質、光線、動作會影響準確度。</div>
+    </footer>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
