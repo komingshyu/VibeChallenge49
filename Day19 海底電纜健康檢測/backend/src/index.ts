@@ -1,0 +1,39 @@
+
+import 'dotenv/config';
+import express from 'express';
+import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { CONFIG } from './config.js';
+import cablesRouter from './routes/cables.js';
+import eventsRouter from './routes/events.js';
+import radarRouter from './routes/radar.js';
+import bgpRouter from './routes/bgp.js';
+import insightsRouter from './routes/insights.js';
+import { attachRipeRisLive } from './providers/risLive.js';
+import { checkRadarToken } from './providers/radarOutage.js';
+
+const app = express();
+app.use(cors());
+app.use(express.json({ limit: '2mb' }));
+
+app.use('/api/cables', cablesRouter);
+app.use('/api/events', eventsRouter);
+app.use('/api/radar', radarRouter);
+app.use('/api/bgp', bgpRouter);
+app.use('/api/insights', insightsRouter);
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const frontendDist = path.resolve(__dirname, '../../frontend/dist');
+app.use(express.static(frontendDist));
+app.get('*', (_req, res) => res.sendFile(path.join(frontendDist, 'index.html')));
+
+const server = app.listen(CONFIG.PORT, async () => {
+  console.log(`[backend] http://localhost:${CONFIG.PORT}`);
+  const masked=(CONFIG.CLOUDFLARE_API_TOKEN||'').length;
+  console.log(`[radar] token present: ${masked>0} ${masked?`(len ${masked})`:''}`);
+  const auth=await checkRadarToken();
+  console.log(`[radar] quick check: authorized=${auth.ok} status=${auth.status||0} ${auth.message?'- '+String(auth.message).slice(0,140):''}`);
+});
+attachRipeRisLive(server);

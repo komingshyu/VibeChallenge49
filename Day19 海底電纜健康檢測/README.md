@@ -1,0 +1,1 @@
+See scripts\setup.bat and scripts\start.bat

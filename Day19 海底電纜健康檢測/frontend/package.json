@@ -1,0 +1,24 @@
+{
+  "name": "tw-subsea-monitor-frontend",
+  "private": true,
+  "version": "0.1.10",
+  "type": "module",
+  "scripts": {
+    "dev": "node node_modules/vite/bin/vite.js",
+    "build": "node node_modules/vite/bin/vite.js build",
+    "preview": "node node_modules/vite/bin/vite.js preview",
+    "clean": "node -e \"try{require('fs').rmSync('./node_modules/.vite',{recursive:true,force:true});console.log('cleaned .vite cache')}catch(e){console.log('nothing to clean')}\""
+  },
+  "dependencies": {
+    "echarts": "^5.5.0",
+    "maplibre-gl": "^4.5.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.46",
+    "@types/react-dom": "^18.2.18",
+    "typescript": "^5.6.2",
+    "vite": "^5.4.20"
+  }
+}

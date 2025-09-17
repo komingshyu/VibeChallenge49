@@ -1,0 +1,17 @@
+import { Router } from 'express';
+import { fetchRecentEarthquakes } from '../providers/usgs.js';
+import { fetchPTWCBulletins } from '../providers/ptwc.js';
+const r = Router();
+r.get('/earthquakes', async (_q, s) => { try {
+    s.json(await fetchRecentEarthquakes());
+}
+catch (e) {
+    s.status(500).json({ error: e.message || 'usgs error' });
+} });
+r.get('/tsunami', async (_q, s) => { try {
+    s.json(await fetchPTWCBulletins(6));
+}
+catch (e) {
+    s.status(500).json({ error: e.message || 'ptwc error' });
+} });
+export default r;

@@ -1,0 +1,21 @@
+
+<!doctype html><html lang="zh-Hant"><head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>台灣海底電纜健康監測</title>
+<style>:root{--bg:#0b0f17;--fg:#e6f1ff;--neon:#36d6ff;--accent:#8a2be2;--card:#121826;--muted:#92a0b3;}
+html,body,#root{height:100%;margin:0;background:var(--bg);color:var(--fg);}
+.hud{position:fixed;top:0;left:0;right:0;backdrop-filter:blur(6px);background:rgba(11,15,23,0.6);border-bottom:1px solid rgba(54,214,255,0.2);}
+.hud-inner{max-width:1320px;margin:0 auto;padding:10px 16px;display:flex;gap:16px;align-items:center;}
+.brand{font-weight:700;letter-spacing:.6px;}
+.grid{max-width:1320px;margin:80px auto 24px;padding:0 16px;display:grid;grid-template-columns:2fr 1fr;gap:16px;}
+@media (max-width:1024px){.grid{grid-template-columns:1fr;}}
+.panel{background:var(--card);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:12px;box-shadow:0 10px 40px rgba(0,0,0,0.25);overflow:hidden;}
+.kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.kpi .tile{background:linear-gradient(180deg,rgba(54,214,255,0.12),rgba(255,255,255,0.03));border:1px solid rgba(54,214,255,0.25);border-radius:12px;padding:12px;}
+.muted{color:var(--muted);font-size:12px;}
+a{color:var(--neon);text-decoration:none;}
+.chip{border:1px solid rgba(138,43,226,0.5);color:#ddd;padding:2px 8px;border-radius:999px;font-size:12px;}
+</style></head><body>
+<div id="root"></div>
+<script type="module" src="/src/main.tsx"></script>
+</body></html>

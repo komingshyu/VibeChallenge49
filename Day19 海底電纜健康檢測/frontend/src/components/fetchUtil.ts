@@ -1,0 +1,1 @@
+export async function safeJson(r: Response){ const ct=r.headers.get('content-type')||''; if(!r.ok) throw new Error(`HTTP ${r.status}`); if(ct.includes('application/json')) return r.json(); const text=await r.text(); try{ return JSON.parse(text); }catch{ throw new Error('Not JSON: '+text.slice(0,120)); } }
