@@ -1,0 +1,36 @@
+
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <title>Chat2Message 檢視器</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="viewer.css" />
+</head>
+<body>
+  <header class="appbar">
+    <div class="brand">Chat2Message · Viewer</div>
+    <nav class="tabs">
+      <a href="#render" data-tab="render" class="tab active">渲染</a>
+      <a href="#json" data-tab="json" class="tab">JSON</a>
+      <a href="#diag" data-tab="diag" class="tab">診斷</a>
+    </nav>
+  </header>
+  <main id="app">
+    <section id="pane-render" class="pane"></section>
+    <section id="pane-json" class="pane hidden">
+      <div class="json-actions">
+        <button id="btn-copy">複製 JSON</button>
+        <button id="btn-download">下載 JSON（引用版）</button>
+        <button id="btn-export-b64">導出 base64 JSON（合併 IDB）</button>
+        <span id="export-status" class="muted"></span>
+      </div>
+      <pre><code id="json-view"></code></pre>
+    </section>
+    <section id="pane-diag" class="pane hidden">
+      <pre id="diag-view" class="mono"></pre>
+    </section>
+  </main>
+  <script src="viewer.js" type="module"></script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+{
+  "manifest_version": 3,
+  "name": "Chat2Message",
+  "version": "0.3.16",
+  "description": "Instant Viewer 修正版：先開 Viewer，內容串流補上；含 CSP Router + IDB 預載 + Lazy base64。",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "contextMenus",
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://chat.openai.com/*",
+    "https://chatgpt.com/*",
+    "https://*.openai.com/*",
+    "https://claude.ai/*",
+    "https://gemini.google.com/*",
+    "https://aistudio.google.com/*",
+    "https://*.googleusercontent.com/*",
+    "https://*.oaiusercontent.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Chat2Message"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "viewer/*",
+        "assets/*",
+        "content/*"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chat.openai.com/*",
+        "https://chatgpt.com/*",
+        "https://*.openai.com/*",
+        "https://claude.ai/*",
+        "https://gemini.google.com/*",
+        "https://aistudio.google.com/*"
+      ],
+      "js": [
+        "content/preload.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
